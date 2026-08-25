@@ -1,0 +1,1403 @@
+<title>TSB Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    --bg: #0F172A;
+    --bg-deep: #0A1122;
+    --panel: #151F38;
+    --panel-2: #1B2745;
+    --panel-3: #202E52;
+    --line: #26355A;
+    --line-soft: #1E2B4B;
+    --text: #E8EEFA;
+    --dim: #93A4C4;
+    --dimmer: #6B7C9E;
+    --ember-a: #FFB627;
+    --ember-b: #FF5A3C;
+    --warn: #FF6B57;
+    --ok: #4ADE80;
+
+    --r: 10px;
+    --cols: minmax(190px, 2.4fr) 108px 132px 104px 92px 92px 176px;
+    --font-display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+    --font-body: "Barlow", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "Consolas", monospace;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    background-image:
+      radial-gradient(1100px 520px at 12% -12%, rgba(255,90,60,.10), transparent 62%),
+      radial-gradient(900px 480px at 92% -6%, rgba(76,141,246,.10), transparent 60%);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 30px 20px 90px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* ---------- masthead ---------- */
+  .masthead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .eyebrow {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+  }
+  .masthead h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(28px, 4.4vw, 42px);
+    line-height: 1.05;
+    letter-spacing: -.01em;
+    margin: 6px 0 8px;
+    text-wrap: balance;
+  }
+  .lede { margin: 0; max-width: 56ch; color: var(--dim); }
+
+  .readout {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    padding: 12px 20px 12px 26px;
+    border-left: 2px solid transparent;
+    border-image: linear-gradient(180deg, var(--ember-a), var(--ember-b)) 1;
+  }
+  .readout-label {
+    font-family: var(--font-display);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+  }
+  .readout-value {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(46px, 8vw, 68px);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(140deg, var(--ember-a), var(--ember-b));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .readout-math {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .readout-math b { color: var(--text); font-weight: 700; }
+  .readout-math .op { color: var(--dimmer); padding: 0 2px; }
+
+  /* ---------- console modules ---------- */
+  .console {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .module {
+    background: var(--panel);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--r);
+    padding: 15px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+  }
+  .mod-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .mod-title {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin: 0;
+  }
+
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .field > span {
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+    font-weight: 600;
+  }
+  .field-row { display: flex; gap: 10px; }
+  .field-row .field { flex: 1; }
+
+  input[type="number"], input[type="search"], select {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    color: var(--text);
+    background: var(--bg-deep);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 11px;
+    width: 100%;
+    min-width: 0;
+    appearance: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  select {
+    font-family: var(--font-body);
+    background-image: linear-gradient(45deg, transparent 50%, var(--dim) 50%), linear-gradient(135deg, var(--dim) 50%, transparent 50%);
+    background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 30px;
+  }
+  select option { background: var(--panel-2); color: var(--text); }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { appearance: none; margin: 0; }
+  input[type="search"]::-webkit-search-cancel-button { filter: invert(1) opacity(.4); }
+  input:focus-visible, select:focus-visible, button:focus-visible, .chip:has(input:focus-visible), .switch:has(input:focus-visible) {
+    outline: 2px solid var(--ember-a);
+    outline-offset: 2px;
+  }
+  input[type="number"]:focus, input[type="search"]:focus, select:focus {
+    border-color: var(--panel-3);
+    box-shadow: 0 0 0 3px rgba(255,182,39,.10);
+  }
+  .field.is-off input, .field.is-off select { opacity: .4; }
+
+  /* toggle switch */
+  .switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--dim);
+    border-radius: 20px;
+  }
+  .switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .track {
+    width: 38px;
+    height: 21px;
+    border-radius: 20px;
+    background: var(--bg-deep);
+    border: 1px solid var(--line);
+    position: relative;
+    transition: background .18s ease, border-color .18s ease;
+    flex: none;
+  }
+  .track::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--dimmer);
+    transition: transform .18s ease, background .18s ease;
+  }
+  .switch:has(input:checked) { color: var(--text); }
+  .switch:has(input:checked) .track { background: rgba(255,90,60,.20); border-color: var(--ember-b); }
+  .switch:has(input:checked) .track::after { transform: translateX(17px); background: var(--ember-b); }
+
+  .spear-math {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--dim);
+    font-variant-numeric: tabular-nums;
+    margin-top: auto;
+    padding-top: 2px;
+  }
+  .spear-math b { color: var(--ember-a); font-weight: 700; }
+  .spear-math.is-off, .spear-math.is-off b { color: var(--dimmer); }
+
+  /* slot meter */
+  .slots-head { display: flex; align-items: center; gap: 10px; }
+  .pill {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: var(--panel-3);
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .pill.is-full { background: rgba(255,107,87,.18); color: var(--warn); }
+  .meter { display: flex; gap: 5px; }
+  .meter i {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--bg-deep);
+    border: 1px solid var(--line);
+    transition: background .18s ease, border-color .18s ease;
+  }
+  .meter i.on { background: linear-gradient(90deg, var(--ember-a), var(--ember-b)); border-color: transparent; }
+  .slot-note { font-size: 12.5px; color: var(--dimmer); margin: 0; }
+  .slot-note.is-full { color: var(--warn); font-weight: 600; }
+  .slot-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .slot-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    padding: 3px 5px 3px 8px;
+    border-radius: 6px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    max-width: 100%;
+  }
+  .slot-tag span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .slot-tag em {
+    font-style: normal;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--k);
+    letter-spacing: .04em;
+  }
+  .slot-tag button {
+    border: 0;
+    background: transparent;
+    color: var(--dimmer);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+  }
+  .slot-tag button:hover { color: var(--warn); background: rgba(255,107,87,.12); }
+
+  .ghost-btn {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--dim);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: color .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .ghost-btn:hover:not(:disabled) { color: var(--text); border-color: var(--panel-3); background: var(--panel-2); }
+  .ghost-btn:disabled { opacity: .35; cursor: default; }
+
+  /* ---------- filter rail ---------- */
+  .rail {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    justify-content: space-between;
+  }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tab {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    color: var(--dim);
+    background: var(--panel);
+    border: 1px solid var(--line-soft);
+    border-radius: 7px;
+    padding: 6px 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: color .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .tab .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--k, var(--dim)); flex: none; }
+  .tab:hover { color: var(--text); border-color: var(--panel-3); }
+  .tab[aria-pressed="true"] {
+    color: #0A1122;
+    background: var(--k, var(--text));
+    border-color: transparent;
+  }
+  .tab[aria-pressed="true"] .dot { background: rgba(10,17,34,.45); }
+  .tab .n { font-family: var(--font-mono); font-size: 10.5px; opacity: .7; }
+
+  .rail-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .search { position: relative; }
+  .search input { width: 232px; padding-left: 32px; font-family: var(--font-body); font-size: 14px; }
+  .search::before {
+    content: "";
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    margin-top: -6px;
+    border: 1.6px solid var(--dimmer);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .search::after {
+    content: "";
+    position: absolute;
+    left: 21px;
+    top: 50%;
+    width: 6px;
+    height: 1.6px;
+    background: var(--dimmer);
+    transform: rotate(45deg);
+    margin-top: 3px;
+    pointer-events: none;
+  }
+
+  /* ---------- table ---------- */
+  .table-wrap {
+    border: 1px solid var(--line-soft);
+    border-radius: var(--r);
+    background: var(--panel);
+    overflow: hidden;
+  }
+  .scroller { overflow-x: auto; }
+  .grid { min-width: 940px; }
+  .thead, .row {
+    display: grid;
+    grid-template-columns: var(--cols);
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px;
+  }
+  .thead {
+    height: 42px;
+    background: var(--bg-deep);
+    border-bottom: 1px solid var(--line);
+  }
+  .th {
+    font-family: var(--font-display);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+    background: transparent;
+    border: 0;
+    padding: 4px 0;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .th.num-h { text-align: right; }
+  .th.static { cursor: default; }
+  .th:hover:not(.static) { color: var(--text); }
+  .th[aria-sort="ascending"], .th[aria-sort="descending"] { color: var(--ember-a); }
+  .th[aria-sort="ascending"]::after { content: " \2191"; }
+  .th[aria-sort="descending"]::after { content: " \2193"; }
+
+  .row {
+    min-height: 58px;
+    border-bottom: 1px solid var(--line-soft);
+    position: relative;
+    transition: background .12s ease;
+  }
+  .row::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--k);
+    opacity: .30;
+  }
+  .row:last-child { border-bottom: 0; }
+  .row:hover { background: var(--panel-2); }
+  .row.tuned { background: rgba(255,182,39,.05); }
+  .row.tuned:hover { background: rgba(255,182,39,.08); }
+  .row.hidden { display: none; }
+
+  /* sub-moveset divider */
+  .section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 16px 9px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .section.hidden { display: none; }
+  .section-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--k);
+    flex: none;
+  }
+  .section-name {
+    font-family: var(--font-display);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--k);
+    white-space: nowrap;
+  }
+  .section-rule {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--k) 45%, transparent), transparent);
+  }
+  .no-ups {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .04em;
+    color: var(--dimmer);
+    border: 1px dashed var(--line);
+    border-radius: 6px;
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+
+  .mv { font-weight: 600; font-size: 14.5px; display: block; line-height: 1.25; }
+  .sub {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--dimmer);
+    letter-spacing: .03em;
+  }
+  .badge {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 5px;
+    color: var(--k);
+    background: color-mix(in srgb, var(--k) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--k) 32%, transparent);
+    white-space: nowrap;
+  }
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 14px;
+    display: block;
+    text-align: right;
+  }
+  .num.dim { color: var(--dimmer); font-size: 13px; }
+  .num.big { font-size: 17px; font-weight: 700; letter-spacing: -.02em; }
+  .num.up { color: var(--ember-a); }
+  .num.cut { color: var(--ok); }
+  .num.fast { color: #35D6E0; }
+  .c-total { display: flex; flex-direction: column; align-items: stretch; gap: 5px; }
+  .c-hits { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; cursor: help; }
+  .c-total .stages { text-align: right; }
+  .c-total .stages:empty { display: none; }
+  .stages {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--dimmer);
+    letter-spacing: -.01em;
+    white-space: nowrap;
+  }
+  .bar { height: 3px; border-radius: 2px; background: var(--line-soft); overflow: hidden; }
+  .bar i {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--k) 50%, transparent), var(--k));
+    transition: width .25s ease;
+  }
+
+  .ups { display: flex; gap: 5px; justify-content: flex-end; }
+  .chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    width: 52px;
+    height: 26px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--bg-deep);
+    color: var(--dimmer);
+    cursor: pointer;
+    transition: color .15s ease, background .15s ease, border-color .15s ease, opacity .15s ease;
+  }
+  .chip input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .chip:hover:not(.locked) { color: var(--text); border-color: var(--panel-3); }
+  .chip.dmg:has(input:checked) { color: #0A1122; background: var(--ember-b); border-color: transparent; }
+  .chip.mas:has(input:checked) { color: #0A1122; background: var(--ok); border-color: transparent; }
+  .chip.spd:has(input:checked) { color: #0A1122; background: #35D6E0; border-color: transparent; }
+  .chip.locked { opacity: .3; cursor: not-allowed; }
+  .chip.inert:not(:has(input:checked)) { border-style: dashed; }
+
+  .tfoot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 11px 16px;
+    background: var(--bg-deep);
+    border-top: 1px solid var(--line);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--dimmer);
+    font-variant-numeric: tabular-nums;
+  }
+  .tfoot b { color: var(--dim); font-weight: 700; }
+  .empty { padding: 44px 16px; text-align: center; color: var(--dimmer); }
+  .empty.hidden { display: none; }
+
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 1040px) {
+    .console { grid-template-columns: 1fr 1fr; }
+    .module.slots { grid-column: 1 / -1; }
+  }
+  @media (max-width: 980px) {
+    .grid { min-width: 0; }
+    .thead { display: none; }
+    .table-wrap { background: transparent; border: 0; border-radius: 0; overflow: visible; }
+    .scroller { overflow-x: visible; }
+    .rows { display: grid; gap: 10px; }
+    .row {
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 14px;
+      padding: 14px 14px 14px 16px;
+      background: var(--panel);
+      border: 1px solid var(--line-soft);
+      border-radius: var(--r);
+      align-items: end;
+    }
+    .row::before { border-radius: var(--r) 0 0 var(--r); opacity: .75; }
+    .row:last-child { border-bottom: 1px solid var(--line-soft); }
+    .cell[data-label] { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
+    .cell[data-label]::before {
+      content: attr(data-label);
+      font-family: var(--font-display);
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+      color: var(--dimmer);
+    }
+    .num { text-align: left; }
+    .c-move, .c-total, .c-ups { grid-column: 1 / -1; }
+    .cell.c-total[data-label] { align-items: stretch; }
+    .c-total .stages { text-align: left; }
+    .ups { justify-content: flex-start; }
+    .chip { flex: 1; max-width: 96px; height: 30px; }
+    .section { padding: 6px 4px 0; border-bottom: 0; }
+    .tfoot { border: 1px solid var(--line-soft); border-radius: var(--r); background: var(--panel); margin-top: 2px; }
+  }
+  @media (max-width: 720px) {
+    .console { grid-template-columns: 1fr; }
+    .module.slots { grid-column: auto; }
+    .readout { align-items: flex-start; padding-left: 18px; }
+    .masthead { align-items: flex-start; }
+    .rail-right { width: 100%; }
+    .search { flex: 1; }
+    .search input { width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="app">
+
+  <header class="masthead">
+    <div class="brand">
+      <span class="eyebrow">Roblox &middot; The Shattered Balance</span>
+      <h1>TSB Calculator</h1>
+      <p class="lede">Set your strength, fit a spear, and spend four skill-tree slots. Every ability in the game recalculates as you go.</p>
+    </div>
+    <div class="readout">
+      <span class="readout-label">Effective strength</span>
+      <span class="readout-value" id="effTotal">375</span>
+      <span class="readout-math"><b id="mBase">375</b> base <span class="op">+</span> <b id="mBonus">0</b> spear</span>
+    </div>
+  </header>
+
+  <section class="console" aria-label="Build controls">
+
+    <div class="module">
+      <div class="mod-head"><h2 class="mod-title">Strength</h2></div>
+      <label class="field">
+        <span>Base strength</span>
+        <input id="baseStr" type="number" min="0" max="99999" step="1" value="375" inputmode="numeric">
+      </label>
+      <p class="spear-math">Applies to every ability listed below.</p>
+    </div>
+
+    <div class="module" id="spearModule">
+      <div class="mod-head">
+        <h2 class="mod-title">Spear</h2>
+        <label class="switch">
+          <input type="checkbox" id="spearOn">
+          <span class="track" aria-hidden="true"></span>
+          <span>Equipped</span>
+        </label>
+      </div>
+      <div class="field-row">
+        <label class="field is-off" id="fLvl">
+          <span>Upgrades</span>
+          <select id="spearLvl" disabled>
+            <option value="0">No upgrade</option>
+            <option value="1">1 upgrade</option>
+            <option value="2">2 upgrades</option>
+            <option value="3">3 upgrades</option>
+            <option value="4">4 upgrades</option>
+            <option value="5">5 upgrades</option>
+          </select>
+        </label>
+        <label class="field is-off" id="fRar">
+          <span>Rarity</span>
+          <select id="spearRar" disabled>
+            <option value="0.65">Common</option>
+            <option value="1" selected>Uncommon</option>
+            <option value="1.25">Rare</option>
+            <option value="1.5">Epic</option>
+            <option value="2">Legendary</option>
+            <option value="2.5">Mythic</option>
+          </select>
+        </label>
+      </div>
+      <p class="spear-math is-off" id="spearMath">Not equipped &mdash; no bonus strength.</p>
+    </div>
+
+    <div class="module slots">
+      <div class="mod-head">
+        <div class="slots-head">
+          <h2 class="mod-title">Skill slots</h2>
+          <span class="pill" id="slotPill">0 / 4</span>
+        </div>
+        <button class="ghost-btn" id="clearUps" disabled>Clear all</button>
+      </div>
+      <div class="meter" id="slotMeter" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div class="slot-list" id="slotList"></div>
+      <p class="slot-note" id="slotNote">Pick any four upgrades across every move &mdash; damage, mastery or speed.</p>
+    </div>
+
+  </section>
+
+  <div class="rail">
+    <div class="tabs" id="tabs" role="group" aria-label="Filter by element"></div>
+    <div class="rail-right">
+      <label class="switch">
+        <input type="checkbox" id="tunedOnly">
+        <span class="track" aria-hidden="true"></span>
+        <span>Upgraded only</span>
+      </label>
+      <div class="search">
+        <label class="sr" for="q">Search moves</label>
+        <input type="search" id="q" placeholder="Search moves&hellip;" autocomplete="off">
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="scroller">
+      <div class="grid" role="table" aria-label="Ability damage table">
+        <div class="thead" role="row">
+          <button class="th" data-sort="name" role="columnheader" aria-sort="none">Move</button>
+          <button class="th" data-sort="element" role="columnheader" aria-sort="none">Element</button>
+          <button class="th num-h" data-sort="total" role="columnheader" aria-sort="none">Damage</button>
+          <button class="th num-h" data-sort="hitbox" role="columnheader" aria-sort="none"
+            title="Hitbox count">Ticks</button>
+          <button class="th num-h" data-sort="stamina" role="columnheader" aria-sort="none">Stamina</button>
+          <button class="th num-h" data-sort="speed" role="columnheader" aria-sort="none">Speed</button>
+          <span class="th num-h static" role="columnheader">Upgrades</span>
+        </div>
+        <div class="rows" id="rows"></div>
+      </div>
+    </div>
+    <p class="empty hidden" id="empty">No moves match that search.</p>
+    <div class="tfoot">
+      <span id="countNote">&mdash;</span>
+      <span id="topNote">&mdash;</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var CSV = [
+    'Element,AbilityFolder,MoveTitle,HitboxCount,BaseDamage,DamageScale,BaseStamina,BaseSpeed,UpgradedDamageMultiplier,UpgradedStamina,UpgradedSpeed',
+    'Fire,Ability1,"Fireball",3.5,1,0.0225,5,0,1.20,2.5,0',
+    'Fire,Ability4,"Swing Kick",3.5,10,0.21,5,0,1.20,2.5,0',
+    'Fire,Ability4,"Slam Kick",4,30,0.19,5,0,1.20,2.5,0',
+    'Fire,Ability2,"Fly Kick",1,20,0.13,5,0,1.20,2.5,0',
+    'Fire,Ability6,"Fire Breathe",3.5,1,0.018,0,0,1.20,0,0',
+    'Fire,Ability7,"Sun Blast",6,15,0.3,20,0,1.20,10,0',
+    'Fire,Ability7,"Short Explosion",0.2,30,0.266,20,150,1.20,10,173',
+    'Fire,Ability7,"Lightning Bolt",1,15,0.25,20,0,1.20,10,0',
+    'Fire,Ability8,"Sun Barrage",3,3,0.02,20,0,1.20,10,0',
+    'Fire,Ability8,"Medium Explosion",0.2,30,0.266,20,150,1.20,10,173',
+    'Fire,Ability8,"Lightning Strike",1,10,0.155,20,0,1.20,10,0',
+    'Fire,Ability9,"Long Explosion",0.2,30,0.266,20,150,1.20,10,173',
+    'Fire,Ability10,"Fire Spin",1,10,0.025,20,0,1.20,10,0',
+    'Base,Melee,"Punch",1,5,0.1,3,0,1.20,1.5,0',
+    'Base,Melee,"Tentacle",1,5,0.1,3,0,1.20,1.5,0',
+    'Base,Melee,"Sword",1,5,0.1,3,0,1.20,1.5,0',
+    'Base,Melee,"Spear",1,15,0.1,10,250,1.20,5,288',
+    'Air,Ability3,"Gust",3.5,1,0.0225,5,0,1.20,2.5,0',
+    'Air,Ability5,"Whirlwind",1,15,0.25,10,0,1.20,5,0',
+    'Air,Ability6,"Air Blow",3.5,2,0.02,0,0,1.20,0,0',
+    'Air,Ability7,"Glider Swipe",12, 12, 12,2,0.025,20,0,1.20,10,0',
+    'Air,Ability7,"Triple Swipe",9, 9, 9,1,0.015,20,0,1.20,10,0',
+    'Air,Ability8,"Glider Whip",1,15,0.215,20,0,1.20,10,0',
+    'Air,Ability8,"Air Torpedo",1,15,0.25,20,0,1.20,10,0',
+    'Air,Ability9,"Tornado",1,14,0.2,20,0,1.20,10,0',
+    'Air,Ability9,"Air Pursuit",12,20,0.225,20,60,1.20,10,69',
+    'Earth,Ability1,"Rock Throw",6,10,0.225,5,135,1.20,2.5,155',
+    'Earth,Ability2,"Earth Launch",1,5,0.25,10,0,1.20,5,0',
+    'Earth,Ability3,"Earth Wall",20, 20, 5,5,0.25,5,90,1.20,2.5,103',
+    'Earth,Ability4,"Earth Punch",1,10,0.25,5,90,1.20,2.5,103',
+    'Earth,Ability5,"Rock Triad",1,10,0.2,10,110,1.20,5,126',
+    'Earth,Ability6,"Earthquake",8, 16, 8,10,0.18,10,0,1.20,5,0',
+    'Earth,Ability6,"Earth Smash",1,15,0.22,10,0,1.20,5,0',
+    'Earth,Ability7,"Plate Shot",4, 4, 4,17,0.12,20,165,1.20,10,190',
+    'Earth,Ability7,"Sand Slash",4.099999904632568, 24, 24,20,0.22,20,105,1.20,10,121',
+    'Earth,Ability7,"Lava Streams",1,5,0.063,20,0,1.20,10,0',
+    'Earth,Ability8,"Lava Pool",1,5,0.053,20,0,1.20,10,0',
+    'Earth,Ability8,"Sandstorm",1,30,0.18,20,65,1.20,10,75',
+    'Earth,Ability9,"Lava Wave",1,40,0.2,20,90,1.20,10,103',
+    'Earth,Ability9,"Extension Sword",9, 8, 9,5,0.25,20,65,1.20,10,75',
+    'Earth,Ability10,"Earth Pillars",1,5,0.25,20,350,1.20,10,402',
+    'Water,Ability1,"Splash",3.5,20,0.2,5,165,1.20,2.5,190',
+    'Water,Ability2,"Water Burst",1,15,0.225,10,0,1.20,5,0',
+    'Water,Ability2,"Water Whip",6,30,0.22,5,185,1.20,2.5,213',
+    'Water,Ability5,"Water Wave",1,10,0.205,10,75,1.20,5,86',
+    'Water,Ability6,"Water Leap",1,15,0.1,10,0,1.20,5,0',
+    'Water,Ability7,"Ice Spikes",1,5,0.25,20,285,1.20,10,328',
+    'Water,Ability7,"Vine Slash",1,5,0.225,20,0,1.20,10,0',
+    'Water,Ability9,"Ice Barrage",2.5,6,0.02,20,180,1.20,10,207',
+    'Water,Ability9,"Vine Whip",1,5,0.225,20,0,1.20,10,0',
+    'Water,Ability8,"Ice Wall",2,5,0.075,10,160,1.20,5,184',
+    'Water,Ability10,"Spirit Wave",1,50,0.18,25,115,1.20,12.5,132',
+    'Tentacles,Ability8,"Tentacle Swipe",1,16,0.13,20,70,1.20,10,81',
+    'Tentacles,Ability9,"Tentacle Storm",2.5,10,0.09,20,160,1.20,10,184',
+    'FireTank,Ability1,"Fire Blast",6,10,0.22,0,0,1.20,0,0',
+    'EarthTank,Ability1,"Earth Charge",1,10,0.22,0,0,1.20,0,0'
+  ].join('\n');
+
+  function parseCSV(text) {
+    var lines = text.replace(/\r/g, '').split('\n').filter(function (l) { return l.trim() !== ''; });
+    var head = lines[0].split(',');
+    // Everything after HitboxCount is a fixed-width numeric tail; a move may list
+    // several hitbox counts (one per stage of the move), so the hitbox column
+    // itself is variable width and is read as whatever sits between the two.
+    var tailCols = head.slice(4);
+
+    return lines.slice(1).map(function (line, i) {
+      var cells = [], cur = '', quoted = false;
+      for (var c = 0; c < line.length; c++) {
+        var ch = line.charAt(c);
+        if (ch === '"') {
+          if (quoted && line.charAt(c + 1) === '"') { cur += '"'; c++; }
+          else { quoted = !quoted; }
+        } else if (ch === ',' && !quoted) {
+          cells.push(cur); cur = '';
+        } else { cur += ch; }
+      }
+      cells.push(cur);
+      cells = cells.map(function (v) { return v.trim(); });
+
+      var cut = cells.length - tailCols.length;
+      var row = {
+        id: i,
+        Element: cells[0],
+        AbilityFolder: cells[1],
+        MoveTitle: cells[2],
+        HitboxList: cells.slice(3, cut).map(Number).filter(function (n) { return isFinite(n); })
+      };
+      row.HitboxCount = row.HitboxList.reduce(function (a, b) { return a + b; }, 0);
+      tailCols.forEach(function (h, j) {
+        var raw = cells[cut + j];
+        row[h] = (raw === undefined || raw === '') ? NaN : Number(raw);
+      });
+      return row;
+    });
+  }
+
+  var MOVES = parseCSV(CSV);
+
+  var ELEMENTS = {
+    All:       { label: 'All moves', color: '#E8EEFA' },
+    Fire:      { label: 'Fire',      color: '#FF5A3C' },
+    Air:       { label: 'Air',       color: '#35D6E0' },
+    Earth:     { label: 'Earth',     color: '#F0A828' },
+    Water:     { label: 'Water',     color: '#4C8DF6' },
+    Base:      { label: 'Base / Melee', color: '#94A6C2' },
+    Tentacles: { label: 'Tentacles', color: '#B265F0' },
+    FireTank:  { label: 'Fire Tank', color: '#FF8A3D' },
+    EarthTank: { label: 'Earth Tank', color: '#C9873A' }
+  };
+  function elColor(name) { return (ELEMENTS[name] || {}).color || '#94A6C2'; }
+  function elLabel(name) { return (ELEMENTS[name] || {}).label || name; }
+
+  // Movesets that belong to an element without carrying its name.
+  var PARENT = { Tentacles: 'Water', FireTank: 'Fire', EarthTank: 'Earth' };
+  var MOVESET = { Tentacles: 'Tentacles', FireTank: 'Fire Tank', EarthTank: 'Earth Tank' };
+  function elGroup(name) { return PARENT[name] || name; }
+
+  // Sub-movesets within an element. Anything unlisted is a basic move for its
+  // element and sorts above the sub-movesets. Air has no sub-movesets.
+  var SUB_OF = {
+    'Tentacle Swipe': 'Tentacles', 'Tentacle Storm': 'Tentacles',
+    'Vine Slash': 'Plant', 'Vine Whip': 'Plant',
+    'Ice Spikes': 'Ice', 'Ice Wall': 'Ice', 'Ice Barrage': 'Ice',
+    'Sand Slash': 'Sand', 'Sandstorm': 'Sand',
+    'Lava Streams': 'Lava', 'Lava Pool': 'Lava', 'Lava Wave': 'Lava',
+    'Plate Shot': 'Metal', 'Extension Sword': 'Metal',
+    'Sun Blast': 'Sun Warrior', 'Sun Barrage': 'Sun Warrior',
+    'Lightning Bolt': 'Lightning', 'Lightning Strike': 'Lightning',
+    'Short Explosion': 'Combustion', 'Medium Explosion': 'Combustion', 'Long Explosion': 'Combustion'
+  };
+  var SUB_ORDER = {
+    Water: ['Tentacles', 'Plant', 'Ice'],
+    Earth: ['Sand', 'Lava', 'Metal'],
+    Fire: ['Sun Warrior', 'Lightning', 'Combustion']
+  };
+  function subOf(move) { return SUB_OF[move.MoveTitle] || null; }
+  function subRank(group, sub) {
+    if (!sub) return -1;
+    var list = SUB_ORDER[group] || [];
+    var at = list.indexOf(sub);
+    return at === -1 ? list.length : at;
+  }
+
+  // Base melee takes no skill-tree upgrades.
+  function upgradable(move) { return move.Element !== 'Base'; }
+
+  // Total strength the spear grants at each upgrade level, at the 1.0x baseline.
+  var SPEAR_BASE = [2, 4, 5, 7, 8, 10];
+  var RARITIES = [
+    { name: 'Common', mult: 0.65 },
+    { name: 'Uncommon', mult: 1 },
+    { name: 'Rare', mult: 1.25 },
+    { name: 'Epic', mult: 1.5 },
+    { name: 'Legendary', mult: 2 },
+    { name: 'Mythic', mult: 2.5 }
+  ];
+  var LEVEL_NAMES = ['No upgrade', '1 upgrade', '2 upgrades', '3 upgrades', '4 upgrades', '5 upgrades'];
+  var MAX_SLOTS = 4;
+  var KINDS = [
+    { key: 'dmg', tag: 'DMG', title: 'Damage Boost' },
+    { key: 'mas', tag: 'MAST', title: 'Mastery' },
+    { key: 'spd', tag: 'SPD', title: 'Speed Boost' }
+  ];
+
+  var state = {
+    base: 375,
+    spearOn: false,
+    lvl: 0,
+    rarity: 1,
+    element: 'Fire',
+    query: '',
+    tunedOnly: false,
+    sortKey: null,
+    sortDir: 1
+  };
+  var ups = MOVES.map(function () { return { dmg: false, mas: false, spd: false }; });
+
+  /* ---------- math ---------- */
+  function spearTotal(lvl, rarity) {
+    return Math.ceil(SPEAR_BASE[lvl] * rarity);
+  }
+  function spearBonus() {
+    if (!state.spearOn) return 0;
+    return spearTotal(state.lvl, state.rarity);
+  }
+  function effectiveStrength() {
+    return state.base + spearBonus();
+  }
+  function stats(move, u) {
+    var eff = effectiveStrength();
+    // BaseDamage and DamageScale already describe the move's true damage.
+    // HitboxCount is metadata (duration / ticks) and never multiplies into this.
+    var raw = Math.round(move.BaseDamage + eff * move.DamageScale);
+    var mult = isFinite(move.UpgradedDamageMultiplier) ? move.UpgradedDamageMultiplier : 1.2;
+    var total = u.dmg ? Math.round(raw * mult) : raw;
+
+    var stamina = move.BaseStamina;
+    if (u.mas) {
+      stamina = isFinite(move.UpgradedStamina) ? move.UpgradedStamina : move.BaseStamina * 0.5;
+    }
+    var speed = move.BaseSpeed;
+    if (u.spd) {
+      speed = isFinite(move.UpgradedSpeed) && move.UpgradedSpeed > 0
+        ? move.UpgradedSpeed
+        : Math.round(move.BaseSpeed * 1.15);
+    }
+    return { raw: raw, total: total, stamina: stamina, speed: speed };
+  }
+  function fmt(n) {
+    if (!isFinite(n)) return '—';
+    return (Math.round(n * 100) / 100).toString();
+  }
+  function usedSlots() {
+    var n = 0;
+    ups.forEach(function (u) { KINDS.forEach(function (k) { if (u[k.key]) n++; }); });
+    return n;
+  }
+
+  /* ---------- element tabs ----------
+     Four elemental tabs, plus All and the moves that belong to no element. */
+  var TABS = [
+    { key: 'Fire',  label: 'Fire',         color: '#FF5A3C', match: ['Fire', 'FireTank'] },
+    { key: 'Air',   label: 'Air',          color: '#35D6E0', match: ['Air'] },
+    { key: 'Earth', label: 'Earth',        color: '#F0A828', match: ['Earth', 'EarthTank'] },
+    { key: 'Water', label: 'Water',        color: '#4C8DF6', match: ['Water', 'Tentacles'] },
+    { key: 'Base',  label: 'Base / Melee', color: '#94A6C2', match: ['Base'] }
+  ];
+  function tabMatches(key, element) {
+    var tab = TABS.filter(function (t) { return t.key === key; })[0];
+    if (!tab || !tab.match) return true;
+    return tab.match.indexOf(element) !== -1;
+  }
+
+  var tabsEl = document.getElementById('tabs');
+  TABS.forEach(function (tab) {
+    var n = tab.match
+      ? MOVES.filter(function (m) { return tab.match.indexOf(m.Element) !== -1; }).length
+      : MOVES.length;
+    if (!n) return;
+    var b = document.createElement('button');
+    b.className = 'tab';
+    b.type = 'button';
+    b.style.setProperty('--k', tab.color);
+    b.setAttribute('aria-pressed', tab.key === state.element ? 'true' : 'false');
+    b.dataset.el = tab.key;
+    b.innerHTML = '<span class="dot"></span>' + tab.label + ' <span class="n">' + n + '</span>';
+    b.addEventListener('click', function () {
+      state.element = tab.key;
+      Array.prototype.forEach.call(tabsEl.children, function (t) {
+        t.setAttribute('aria-pressed', t.dataset.el === tab.key ? 'true' : 'false');
+      });
+      applyFilters();
+    });
+    tabsEl.appendChild(b);
+  });
+
+  /* ---------- rows ----------
+     Default order groups by element tab, basic moves first, then each
+     sub-moveset behind its own divider. */
+  var rowsEl = document.getElementById('rows');
+  var tabRank = {};
+  TABS.forEach(function (t, i) { if (t.match) t.match.forEach(function (e) { tabRank[e] = i; }); });
+
+  var ordered = MOVES.slice().sort(function (a, b) {
+    var ta = tabRank[a.Element] || 0, tb = tabRank[b.Element] || 0;
+    if (ta !== tb) return ta - tb;
+    var ra = subRank(elGroup(a.Element), subOf(a)), rb = subRank(elGroup(b.Element), subOf(b));
+    if (ra !== rb) return ra - rb;
+    return a.id - b.id;
+  });
+
+  var defaultNodes = [];
+  var sections = [];
+  var openSection = null;
+  var lastKey = null;
+
+  var views = ordered.map(function (move) {
+    var i = move.id;
+    var group = elGroup(move.Element);
+    var sub = subOf(move);
+    var key = group + '|' + (sub || '');
+
+    if (key !== lastKey) {
+      openSection = null;
+      if (sub) {
+        var head = document.createElement('div');
+        head.className = 'section';
+        head.style.setProperty('--k', elColor(group));
+        head.innerHTML = '<span class="section-dot"></span><span class="section-name"></span><span class="section-rule"></span>';
+        rowsEl.appendChild(head);
+        defaultNodes.push(head);
+        openSection = { el: head, name: head.querySelector('.section-name'), group: group, sub: sub, rows: [] };
+        sections.push(openSection);
+      }
+      lastKey = key;
+    }
+
+    var row = document.createElement('div');
+    row.className = 'row';
+    row.setAttribute('role', 'row');
+    row.style.setProperty('--k', elColor(group));
+
+    var folder = move.AbilityFolder === 'Melee'
+      ? 'Melee'
+      : move.AbilityFolder.replace(/^Ability/, 'Ability ');
+    if (MOVESET[move.Element]) folder = MOVESET[move.Element] + ' &middot; ' + folder;
+
+    var canUpgrade = upgradable(move);
+    var chips = canUpgrade
+      ? KINDS.map(function (k) {
+          return '<label class="chip ' + k.key + '" title="' + k.title + '">' +
+            '<input type="checkbox" data-move="' + i + '" data-kind="' + k.key + '">' +
+            '<span>' + k.tag + '</span></label>';
+        }).join('')
+      : '<span class="no-ups">No upgrades</span>';
+
+    row.innerHTML =
+      '<div class="cell c-move" role="cell"><span class="mv"></span><span class="sub">' + folder + '</span></div>' +
+      '<div class="cell c-el" role="cell" data-label="Element"><span class="badge">' + elLabel(group) + '</span></div>' +
+      '<div class="cell c-total" role="cell" data-label="Damage">' +
+        '<span class="num big" data-f="total"></span>' +
+        '<span class="bar"><i></i></span>' +
+        '<span class="stages" data-f="note"></span>' +
+      '</div>' +
+      '<div class="cell c-hits" role="cell" data-label="Ticks" ' +
+        'title="Hitbox count">' +
+        '<span class="num dim">' + fmt(move.HitboxCount) + '</span>' +
+        (move.HitboxList.length > 1
+          ? '<span class="stages">' + move.HitboxList.map(fmt).join(' + ') + '</span>'
+          : '') +
+      '</div>' +
+      '<div class="cell" role="cell" data-label="Stamina"><span class="num" data-f="stam"></span></div>' +
+      '<div class="cell" role="cell" data-label="Speed"><span class="num" data-f="speed"></span></div>' +
+      '<div class="cell c-ups" role="cell" data-label="Skill slots"><div class="ups">' + chips + '</div></div>';
+
+    row.querySelector('.mv').textContent = move.MoveTitle;
+
+    var v = {
+      move: move,
+      i: i,
+      el: row,
+      canUpgrade: canUpgrade,
+      note: row.querySelector('[data-f="note"]'),
+      total: row.querySelector('[data-f="total"]'),
+      stam: row.querySelector('[data-f="stam"]'),
+      speed: row.querySelector('[data-f="speed"]'),
+      bar: row.querySelector('.bar i'),
+      chips: {},
+      inputs: {},
+      visible: true,
+      s: null
+    };
+    if (canUpgrade) {
+      KINDS.forEach(function (k) {
+        var input = row.querySelector('input[data-kind="' + k.key + '"]');
+        v.inputs[k.key] = input;
+        v.chips[k.key] = input.parentNode;
+      });
+    }
+    rowsEl.appendChild(row);
+    defaultNodes.push(row);
+    if (openSection) openSection.rows.push(v);
+    return v;
+  });
+
+  rowsEl.addEventListener('change', function (e) {
+    var input = e.target;
+    if (!input.dataset || input.dataset.kind === undefined) return;
+    var i = Number(input.dataset.move), kind = input.dataset.kind;
+    if (input.checked && usedSlots() >= MAX_SLOTS && !ups[i][kind]) {
+      input.checked = false;
+      return;
+    }
+    ups[i][kind] = input.checked;
+    recompute();
+  });
+
+  /* ---------- sorting ---------- */
+  var sortValue = {
+    name: function (v) { return v.move.MoveTitle.toLowerCase(); },
+    element: function (v) { return elLabel(v.move.Element).toLowerCase(); },
+    hitbox: function (v) { return v.move.HitboxCount; },
+    total: function (v) { return v.s.total; },
+    stamina: function (v) { return v.s.stamina; },
+    speed: function (v) { return v.s.speed; }
+  };
+  var headers = Array.prototype.slice.call(document.querySelectorAll('.th[data-sort]'));
+  headers.forEach(function (th) {
+    th.addEventListener('click', function () {
+      // Cycles: grouped -> sorted -> reversed -> back to grouped.
+      var key = th.dataset.sort;
+      var def = (key === 'name' || key === 'element') ? 1 : -1;
+      if (state.sortKey !== key) {
+        state.sortKey = key;
+        state.sortDir = def;
+      } else if (state.sortDir === def) {
+        state.sortDir = -def;
+      } else {
+        state.sortKey = null;
+      }
+      headers.forEach(function (h) {
+        var on = state.sortKey && h === th;
+        h.setAttribute('aria-sort', on ? (state.sortDir === 1 ? 'ascending' : 'descending') : 'none');
+      });
+      reorder();
+      paintBars();
+    });
+  });
+  function reorder() {
+    var frag = document.createDocumentFragment();
+    if (!state.sortKey) {
+      defaultNodes.forEach(function (n) { frag.appendChild(n); });
+    } else {
+      var get = sortValue[state.sortKey];
+      views.slice().sort(function (a, b) {
+        var x = get(a), y = get(b);
+        if (x < y) return -1 * state.sortDir;
+        if (x > y) return 1 * state.sortDir;
+        return a.i - b.i;
+      }).forEach(function (v) { frag.appendChild(v.el); });
+    }
+    rowsEl.appendChild(frag);
+  }
+  // Dividers describe the default grouping, so they stand down while a sort is on.
+  function updateSections() {
+    sections.forEach(function (s) {
+      var any = !state.sortKey && s.rows.some(function (v) { return v.visible; });
+      s.el.classList.toggle('hidden', !any);
+      s.name.textContent = s.sub;
+    });
+  }
+
+  /* ---------- filters ---------- */
+  var emptyEl = document.getElementById('empty');
+  var countNote = document.getElementById('countNote');
+  var topNote = document.getElementById('topNote');
+
+  function applyFilters() {
+    var q = state.query.trim().toLowerCase();
+    views.forEach(function (v) {
+      var u = ups[v.i];
+      var okEl = tabMatches(state.element, v.move.Element);
+      var haystack = (v.move.MoveTitle + ' ' + elLabel(elGroup(v.move.Element)) +
+        ' ' + (MOVESET[v.move.Element] || '')).toLowerCase();
+      var okQ = !q || haystack.indexOf(q) !== -1;
+      var okTuned = !state.tunedOnly || u.dmg || u.mas || u.spd;
+      v.visible = okEl && okQ && okTuned;
+      v.el.classList.toggle('hidden', !v.visible);
+    });
+    paintBars();
+  }
+
+  function paintBars() {
+    var max = 0, best = null, shown = 0;
+    views.forEach(function (v) {
+      if (!v.visible) return;
+      shown++;
+      if (v.s.total > max) { max = v.s.total; best = v; }
+    });
+    views.forEach(function (v) {
+      if (!v.visible) return;
+      var pct = max > 0 ? (v.s.total / max) * 100 : 0;
+      v.bar.style.width = pct.toFixed(1) + '%';
+    });
+    updateSections();
+    emptyEl.classList.toggle('hidden', shown > 0);
+    countNote.innerHTML = 'Showing <b>' + shown + '</b> of <b>' + views.length + '</b> moves' +
+      (state.sortKey ? ' &middot; sorted, click the header again to restore grouping' : '');
+    topNote.innerHTML = best
+      ? 'Highest damage shown: <b>' + best.move.MoveTitle + '</b> at <b>' + fmt(best.s.total) + '</b>'
+      : '—';
+  }
+
+  /* ---------- strength + slot readouts ---------- */
+  var effTotalEl = document.getElementById('effTotal');
+  var mBaseEl = document.getElementById('mBase');
+  var mBonusEl = document.getElementById('mBonus');
+  var spearMathEl = document.getElementById('spearMath');
+  var slotPill = document.getElementById('slotPill');
+  var slotMeter = document.getElementById('slotMeter');
+  var slotNote = document.getElementById('slotNote');
+  var slotList = document.getElementById('slotList');
+  var clearBtn = document.getElementById('clearUps');
+
+  var RARITY_NAMES = {};
+  RARITIES.forEach(function (r) { RARITY_NAMES[String(r.mult)] = r.name; });
+
+
+  function paintStrength() {
+    var bonus = spearBonus();
+    effTotalEl.textContent = effectiveStrength();
+    mBaseEl.textContent = state.base;
+    mBonusEl.textContent = bonus;
+    if (state.spearOn) {
+      spearMathEl.classList.remove('is-off');
+      spearMathEl.innerHTML = '<b>+' + bonus + '</b> strength &middot; ' +
+        (RARITY_NAMES[String(state.rarity)] || '') + ', ' + LEVEL_NAMES[state.lvl].toLowerCase();
+    } else {
+      spearMathEl.classList.add('is-off');
+      spearMathEl.textContent = 'Not equipped — no bonus strength.';
+    }
+  }
+
+  function paintSlots() {
+    var used = usedSlots();
+    var full = used >= MAX_SLOTS;
+    slotPill.textContent = used + ' / ' + MAX_SLOTS;
+    slotPill.classList.toggle('is-full', full);
+    Array.prototype.forEach.call(slotMeter.children, function (seg, idx) {
+      seg.classList.toggle('on', idx < used);
+    });
+    slotNote.classList.toggle('is-full', full);
+    slotNote.textContent = full
+      ? 'Upgrade limit reached (4/4) — clear one to swap.'
+      : (used === 0
+        ? 'Pick any four upgrades across every move — damage, mastery or speed.'
+        : (MAX_SLOTS - used) + ' slot' + (MAX_SLOTS - used === 1 ? '' : 's') + ' left.');
+    clearBtn.disabled = used === 0;
+
+    slotList.innerHTML = '';
+    views.forEach(function (v) {
+      KINDS.forEach(function (k) {
+        if (!ups[v.i][k.key]) return;
+        var tag = document.createElement('span');
+        tag.className = 'slot-tag';
+        tag.style.setProperty('--k', elColor(elGroup(v.move.Element)));
+        tag.innerHTML = '<em>' + k.tag + '</em><span></span>' +
+          '<button type="button" aria-label="Remove upgrade">&times;</button>';
+        tag.querySelector('span').textContent = v.move.MoveTitle;
+        tag.querySelector('button').addEventListener('click', function () {
+          ups[v.i][k.key] = false;
+          v.inputs[k.key].checked = false;
+          recompute();
+        });
+        slotList.appendChild(tag);
+      });
+    });
+  }
+
+  /* ---------- master recompute ---------- */
+  function recompute() {
+    var used = usedSlots();
+    var full = used >= MAX_SLOTS;
+
+    views.forEach(function (v) {
+      var u = ups[v.i];
+      var s = stats(v.move, u);
+      v.s = s;
+
+      v.total.textContent = fmt(s.total);
+      v.total.classList.toggle('up', u.dmg);
+      v.note.textContent = '';
+
+      v.stam.textContent = s.stamina > 0 ? fmt(s.stamina) : '—';
+      v.stam.classList.toggle('cut', u.mas && s.stamina !== v.move.BaseStamina);
+
+      v.speed.textContent = s.speed > 0 ? fmt(s.speed) : '—';
+      v.speed.classList.toggle('fast', u.spd && s.speed !== v.move.BaseSpeed);
+
+      v.el.classList.toggle('tuned', u.dmg || u.mas || u.spd);
+
+      if (!v.canUpgrade) return;
+
+      KINDS.forEach(function (k) {
+        var input = v.inputs[k.key];
+        var lock = full && !u[k.key];
+        input.disabled = lock;
+        v.chips[k.key].classList.toggle('locked', lock);
+      });
+      // Selectable on every upgradable move, but flagged where it changes nothing.
+      var noStam = !(v.move.BaseStamina > 0);
+      var noSpeed = !(v.move.BaseSpeed > 0 || v.move.UpgradedSpeed > 0);
+      v.chips.mas.classList.toggle('inert', noStam);
+      v.chips.spd.classList.toggle('inert', noSpeed);
+      v.chips.mas.title = noStam ? 'Mastery — no effect on this move' : 'Mastery';
+      v.chips.spd.title = noSpeed ? 'Speed Boost — no effect on this move' : 'Speed Boost';
+    });
+
+    paintStrength();
+    paintSlots();
+    if (state.tunedOnly) applyFilters(); else paintBars();
+    reorder();
+  }
+
+  /* ---------- control wiring ---------- */
+  var baseInput = document.getElementById('baseStr');
+  baseInput.addEventListener('input', function () {
+    var n = parseFloat(baseInput.value);
+    state.base = isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+    recompute();
+  });
+
+  var spearOn = document.getElementById('spearOn');
+  var spearLvl = document.getElementById('spearLvl');
+  var spearRar = document.getElementById('spearRar');
+  spearOn.addEventListener('change', function () {
+    state.spearOn = spearOn.checked;
+    spearLvl.disabled = spearRar.disabled = !state.spearOn;
+    document.getElementById('fLvl').classList.toggle('is-off', !state.spearOn);
+    document.getElementById('fRar').classList.toggle('is-off', !state.spearOn);
+    recompute();
+  });
+  spearLvl.addEventListener('change', function () {
+    state.lvl = Number(spearLvl.value);
+    recompute();
+  });
+  spearRar.addEventListener('change', function () {
+    state.rarity = Number(spearRar.value);
+    recompute();
+  });
+
+  document.getElementById('q').addEventListener('input', function (e) {
+    state.query = e.target.value;
+    applyFilters();
+  });
+  document.getElementById('tunedOnly').addEventListener('change', function (e) {
+    state.tunedOnly = e.target.checked;
+    applyFilters();
+  });
+  clearBtn.addEventListener('click', function () {
+    ups.forEach(function (u) { KINDS.forEach(function (k) { u[k.key] = false; }); });
+    views.forEach(function (v) {
+      if (!v.canUpgrade) return;
+      KINDS.forEach(function (k) { v.inputs[k.key].checked = false; });
+    });
+    recompute();
+    applyFilters();
+  });
+
+  recompute();
+  applyFilters();
+})();
+</script>
