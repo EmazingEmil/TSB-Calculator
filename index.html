@@ -120,7 +120,7 @@
   /* ---------- console modules ---------- */
   .console {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr 2fr;
     gap: 14px;
   }
   .module {
@@ -592,7 +592,6 @@
   /* ---------- responsive ---------- */
   @media (max-width: 1040px) {
     .console { grid-template-columns: 1fr 1fr; }
-    .module.slots { grid-column: 1 / -1; }
   }
   @media (max-width: 980px) {
     .grid { min-width: 0; }
@@ -632,7 +631,6 @@
   }
   @media (max-width: 720px) {
     .console { grid-template-columns: 1fr; }
-    .module.slots { grid-column: auto; }
     .readout { align-items: flex-start; padding-left: 18px; }
     .masthead { align-items: flex-start; }
     .rail-right { width: 100%; }
@@ -650,12 +648,11 @@
     <div class="brand">
       <span class="eyebrow">Roblox &middot; The Shattered Balance</span>
       <h1>TSB Calculator</h1>
-      <p class="lede">Set your strength, fit a spear, and spend four skill-tree slots. Every ability in the game recalculates as you go.</p>
+      <p class="lede">Set your strength and spend four skill-tree slots. Every ability in the game recalculates as you go.</p>
     </div>
     <div class="readout">
       <span class="readout-label">Effective strength</span>
       <span class="readout-value" id="effTotal">375</span>
-      <span class="readout-math"><b id="mBase">375</b> base <span class="op">+</span> <b id="mBonus">0</b> spear</span>
     </div>
   </header>
 
@@ -670,41 +667,6 @@
       <p class="spear-math">Applies to every ability listed below.</p>
     </div>
 
-    <div class="module" id="spearModule">
-      <div class="mod-head">
-        <h2 class="mod-title">Spear</h2>
-        <label class="switch">
-          <input type="checkbox" id="spearOn">
-          <span class="track" aria-hidden="true"></span>
-          <span>Equipped</span>
-        </label>
-      </div>
-      <div class="field-row">
-        <label class="field is-off" id="fLvl">
-          <span>Upgrades</span>
-          <select id="spearLvl" disabled>
-            <option value="0">No upgrade</option>
-            <option value="1">1 upgrade</option>
-            <option value="2">2 upgrades</option>
-            <option value="3">3 upgrades</option>
-            <option value="4">4 upgrades</option>
-            <option value="5">5 upgrades</option>
-          </select>
-        </label>
-        <label class="field is-off" id="fRar">
-          <span>Rarity</span>
-          <select id="spearRar" disabled>
-            <option value="0.65">Common</option>
-            <option value="1" selected>Uncommon</option>
-            <option value="1.25">Rare</option>
-            <option value="1.5">Epic</option>
-            <option value="2">Legendary</option>
-            <option value="2.5">Mythic</option>
-          </select>
-        </label>
-      </div>
-      <p class="spear-math is-off" id="spearMath">Not equipped &mdash; no bonus strength.</p>
-    </div>
 
     <div class="module slots">
       <div class="mod-head">
@@ -968,6 +930,7 @@
     'Lightning Bolt': 'Lightning', 'Lightning Strike': 'Lightning', 'Lightning Redirect': 'Lightning',
     'Short Explosion': 'Combustion', 'Medium Explosion': 'Combustion', 'Long Explosion': 'Combustion',
     'Lava Shuriken': 'Lava',
+    'Spirit Wave': 'Special', 'Blood Control': 'Special',
     // Shared by every weapon class.
     'Powder Bomb': 'Explosives', 'Double Powder Bomb': 'Explosives',
     'Knives Barrage': 'Blades', 'Sais': 'Blades', 'Precision Slide': 'Blades',
@@ -975,7 +938,7 @@
   };
   var CLASS_SUBS = ['Explosives', 'Blades', 'Acrobat'];
   var SUB_ORDER = {
-    Water: ['Tentacles', 'Plant', 'Ice'],
+    Water: ['Tentacles', 'Plant', 'Ice', 'Special'],
     Earth: ['Sand', 'Lava', 'Metal'],
     Fire: ['Sun Warrior', 'Lightning', 'Combustion'],
     Fans: CLASS_SUBS, Swordsman: CLASS_SUBS, Archer: CLASS_SUBS,
@@ -994,17 +957,6 @@
   function allows(move, kind) { return move.Upgrades.indexOf(UP_CODE[kind]) !== -1; }
   function upgradable(move) { return move.Upgrades !== ''; }
 
-  // Total strength the spear grants at each upgrade level, at the 1.0x baseline.
-  var SPEAR_BASE = [2, 4, 5, 7, 8, 10];
-  var RARITIES = [
-    { name: 'Common', mult: 0.65 },
-    { name: 'Uncommon', mult: 1 },
-    { name: 'Rare', mult: 1.25 },
-    { name: 'Epic', mult: 1.5 },
-    { name: 'Legendary', mult: 2 },
-    { name: 'Mythic', mult: 2.5 }
-  ];
-  var LEVEL_NAMES = ['No upgrade', '1 upgrade', '2 upgrades', '3 upgrades', '4 upgrades', '5 upgrades'];
   var MAX_SLOTS = 4;
   var KINDS = [
     { key: 'dmg', tag: 'DMG', title: 'Damage Boost' },
@@ -1014,9 +966,6 @@
 
   var state = {
     base: 375,
-    spearOn: false,
-    lvl: 0,
-    rarity: 1,
     element: 'Fire',
     query: '',
     tunedOnly: false,
@@ -1026,15 +975,8 @@
   var ups = MOVES.map(function () { return { dmg: false, mas: false, spd: false }; });
 
   /* ---------- math ---------- */
-  function spearTotal(lvl, rarity) {
-    return Math.ceil(SPEAR_BASE[lvl] * rarity);
-  }
-  function spearBonus() {
-    if (!state.spearOn) return 0;
-    return spearTotal(state.lvl, state.rarity);
-  }
   function effectiveStrength() {
-    return state.base + spearBonus();
+    return state.base;
   }
   function stats(move, u) {
     var eff = effectiveStrength();
@@ -1337,32 +1279,15 @@
 
   /* ---------- strength + slot readouts ---------- */
   var effTotalEl = document.getElementById('effTotal');
-  var mBaseEl = document.getElementById('mBase');
-  var mBonusEl = document.getElementById('mBonus');
-  var spearMathEl = document.getElementById('spearMath');
   var slotPill = document.getElementById('slotPill');
   var slotMeter = document.getElementById('slotMeter');
   var slotNote = document.getElementById('slotNote');
   var slotList = document.getElementById('slotList');
   var clearBtn = document.getElementById('clearUps');
 
-  var RARITY_NAMES = {};
-  RARITIES.forEach(function (r) { RARITY_NAMES[String(r.mult)] = r.name; });
-
 
   function paintStrength() {
-    var bonus = spearBonus();
     effTotalEl.textContent = effectiveStrength();
-    mBaseEl.textContent = state.base;
-    mBonusEl.textContent = bonus;
-    if (state.spearOn) {
-      spearMathEl.classList.remove('is-off');
-      spearMathEl.innerHTML = '<b>+' + bonus + '</b> strength &middot; ' +
-        (RARITY_NAMES[String(state.rarity)] || '') + ', ' + LEVEL_NAMES[state.lvl].toLowerCase();
-    } else {
-      spearMathEl.classList.add('is-off');
-      spearMathEl.textContent = 'Not equipped — no bonus strength.';
-    }
   }
 
   function paintSlots() {
@@ -1447,25 +1372,6 @@
   baseInput.addEventListener('input', function () {
     var n = parseFloat(baseInput.value);
     state.base = isFinite(n) && n >= 0 ? Math.floor(n) : 0;
-    recompute();
-  });
-
-  var spearOn = document.getElementById('spearOn');
-  var spearLvl = document.getElementById('spearLvl');
-  var spearRar = document.getElementById('spearRar');
-  spearOn.addEventListener('change', function () {
-    state.spearOn = spearOn.checked;
-    spearLvl.disabled = spearRar.disabled = !state.spearOn;
-    document.getElementById('fLvl').classList.toggle('is-off', !state.spearOn);
-    document.getElementById('fRar').classList.toggle('is-off', !state.spearOn);
-    recompute();
-  });
-  spearLvl.addEventListener('change', function () {
-    state.lvl = Number(spearLvl.value);
-    recompute();
-  });
-  spearRar.addEventListener('change', function () {
-    state.rarity = Number(spearRar.value);
     recompute();
   });
 
