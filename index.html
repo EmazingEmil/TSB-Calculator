@@ -269,6 +269,28 @@
     transition: background .18s ease, border-color .18s ease;
   }
   .meter i.on { background: linear-gradient(90deg, var(--ember-a), var(--ember-b)); border-color: transparent; }
+  .meter i.bonus { border-style: dashed; }
+  .meter i.bonus.locked { opacity: .35; }
+  .meter i.gap { margin-left: 6px; }
+  .slots-tools { display: flex; align-items: center; gap: 12px; }
+  .switch.small { font-size: 10.5px; gap: 7px; }
+  .switch:has(input:disabled) { cursor: not-allowed; opacity: .6; }
+
+  .dlg {
+    max-width: 380px;
+    padding: 20px 20px 16px;
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  }
+  .dlg::backdrop { background: rgba(5,9,20,.7); }
+  .dlg h3 { margin: 0 0 8px; font-family: var(--font-display); font-size: 16px; letter-spacing: .02em; }
+  .dlg p { margin: 0 0 16px; color: var(--dim); font-size: 14px; }
+  .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; }
+  .dlg-actions .ghost-btn.primary { color: #0A1122; background: var(--ember-a); border-color: transparent; }
+  .dlg-actions .ghost-btn.primary:hover { color: #0A1122; background: var(--ember-b); }
   .slot-note { font-size: 12.5px; color: var(--dimmer); margin: 0; }
   .slot-note.is-full { color: var(--warn); font-weight: 600; }
   .slot-list { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -674,9 +696,16 @@
           <h2 class="mod-title">Skill slots</h2>
           <span class="pill" id="slotPill">0 / 4</span>
         </div>
-        <button class="ghost-btn" id="clearUps" disabled>Clear all</button>
+        <div class="slots-tools">
+          <label class="switch small" title="Completing the secret quests unlocks two extra slots">
+            <input type="checkbox" id="secretOn">
+            <span class="track" aria-hidden="true"></span>
+            <span>Secret quests</span>
+          </label>
+          <button class="ghost-btn" id="clearUps" disabled>Clear all</button>
+        </div>
       </div>
-      <div class="meter" id="slotMeter" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div class="meter" id="slotMeter" aria-hidden="true"><i></i><i></i><i></i><i></i><i class="bonus gap"></i><i class="bonus"></i></div>
       <div class="slot-list" id="slotList"></div>
       <p class="slot-note" id="slotNote">Pick any four upgrades across every move &mdash; damage, mastery or speed.</p>
     </div>
@@ -720,6 +749,15 @@
       <span id="topNote">&mdash;</span>
     </div>
   </div>
+
+  <dialog class="dlg" id="secretDlg">
+    <h3>Unlock extra slots?</h3>
+    <p>You only get more than 4 upgrade slots once you've finished the secret quests. Have you completed them?</p>
+    <div class="dlg-actions">
+      <button type="button" class="ghost-btn" id="secretNo">Not yet</button>
+      <button type="button" class="ghost-btn primary" id="secretYes">Yes, unlock</button>
+    </div>
+  </dialog>
 
 </div>
 
@@ -957,7 +995,10 @@
   function allows(move, kind) { return move.Upgrades.indexOf(UP_CODE[kind]) !== -1; }
   function upgradable(move) { return move.Upgrades !== ''; }
 
-  var MAX_SLOTS = 4;
+  // Four slots for everyone; the secret quests unlock two more.
+  var BASE_SLOTS = 4;
+  var MAX_SLOTS = 6;
+  function slotLimit() { return state.secret ? MAX_SLOTS : BASE_SLOTS; }
   var KINDS = [
     { key: 'dmg', tag: 'DMG', title: 'Damage Boost' },
     { key: 'mas', tag: 'MAST', title: 'Mastery' },
@@ -966,6 +1007,7 @@
 
   var state = {
     base: 375,
+    secret: false,
     element: 'Fire',
     query: '',
     tunedOnly: false,
@@ -1173,9 +1215,19 @@
     var input = e.target;
     if (!input.dataset || input.dataset.kind === undefined) return;
     var i = Number(input.dataset.move), kind = input.dataset.kind;
-    if (input.checked && usedSlots() >= MAX_SLOTS && !ups[i][kind]) {
-      input.checked = false;
-      return;
+    if (input.checked && !ups[i][kind]) {
+      var used = usedSlots();
+      if (used >= MAX_SLOTS) { input.checked = false; return; }
+      if (used >= BASE_SLOTS && !state.secret) {
+        input.checked = false;
+        askSecret(function () {
+          setSecret(true);
+          ups[i][kind] = true;
+          input.checked = true;
+          recompute();
+        });
+        return;
+      }
     }
     ups[i][kind] = input.checked;
     recompute();
@@ -1284,6 +1336,30 @@
   var slotNote = document.getElementById('slotNote');
   var slotList = document.getElementById('slotList');
   var clearBtn = document.getElementById('clearUps');
+  var secretOn = document.getElementById('secretOn');
+  var secretDlg = document.getElementById('secretDlg');
+
+  function setSecret(on) {
+    state.secret = on;
+    secretOn.checked = on;
+  }
+  function askSecret(onYes) {
+    if (!secretDlg.showModal) {
+      if (window.confirm('You only get more than 4 upgrade slots once you\u2019ve finished the secret quests. Have you completed them?')) onYes();
+      return;
+    }
+    secretDlg.onclose = function () {
+      if (secretDlg.returnValue === 'yes') onYes();
+    };
+    secretDlg.returnValue = '';
+    secretDlg.showModal();
+  }
+  document.getElementById('secretYes').addEventListener('click', function () { secretDlg.close('yes'); });
+  document.getElementById('secretNo').addEventListener('click', function () { secretDlg.close('no'); });
+  secretOn.addEventListener('change', function () {
+    setSecret(secretOn.checked);
+    recompute();
+  });
 
 
   function paintStrength() {
@@ -1292,19 +1368,25 @@
 
   function paintSlots() {
     var used = usedSlots();
-    var full = used >= MAX_SLOTS;
-    slotPill.textContent = used + ' / ' + MAX_SLOTS;
+    var limit = slotLimit();
+    var full = used >= limit;
+    slotPill.textContent = used + ' / ' + limit;
     slotPill.classList.toggle('is-full', full);
     Array.prototype.forEach.call(slotMeter.children, function (seg, idx) {
       seg.classList.toggle('on', idx < used);
+      seg.classList.toggle('locked', idx >= BASE_SLOTS && !state.secret);
     });
-    slotNote.classList.toggle('is-full', full);
-    slotNote.textContent = full
-      ? 'Upgrade limit reached (4/4) — clear one to swap.'
-      : (used === 0
-        ? 'Pick any four upgrades across every move — damage, mastery or speed.'
-        : (MAX_SLOTS - used) + ' slot' + (MAX_SLOTS - used === 1 ? '' : 's') + ' left.');
+    slotNote.classList.toggle('is-full', used >= MAX_SLOTS);
+    slotNote.textContent = used >= MAX_SLOTS
+      ? 'Upgrade limit reached (6/6) — clear one to swap.'
+      : full
+        ? 'All 4 slots used — picking another asks whether you\u2019ve done the secret quests.'
+        : (used === 0
+          ? 'Pick up to ' + limit + ' upgrades across every move — damage, mastery or speed.'
+          : (limit - used) + ' slot' + (limit - used === 1 ? '' : 's') + ' left.');
     clearBtn.disabled = used === 0;
+    // Can't give the bonus slots back while they're in use.
+    secretOn.disabled = state.secret && used > BASE_SLOTS;
 
     slotList.innerHTML = '';
     views.forEach(function (v) {
@@ -1329,7 +1411,7 @@
   /* ---------- master recompute ---------- */
   function recompute() {
     var used = usedSlots();
-    var full = used >= MAX_SLOTS;
+    var full = state.secret && used >= MAX_SLOTS;
 
     views.forEach(function (v) {
       var u = ups[v.i];
