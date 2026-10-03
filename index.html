@@ -134,7 +134,7 @@
   /* ---------- console modules ---------- */
   .console {
     display: grid;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 14px;
   }
   .module {
@@ -287,6 +287,9 @@
   .meter i.bonus.locked { opacity: .35; }
   .meter i.gap { margin-left: 6px; }
   .slots-tools { display: flex; align-items: center; gap: 12px; }
+  /* Header wraps onto two lines in narrow columns instead of squashing its labels. */
+  .slots .mod-head { flex-wrap: wrap; row-gap: 10px; }
+  .slots .mod-title, .slots .pill, .slots .switch, .slots .ghost-btn { white-space: nowrap; flex: none; }
   .switch.small { font-size: 10.5px; gap: 7px; }
   .switch:has(input:disabled) { cursor: not-allowed; opacity: .6; }
 
@@ -627,6 +630,7 @@
   /* ---------- responsive ---------- */
   @media (max-width: 1040px) {
     .console { grid-template-columns: 1fr 1fr; }
+    .module.slots { grid-column: 1 / -1; }
   }
   @media (max-width: 980px) {
     .grid { min-width: 0; }
@@ -666,6 +670,7 @@
   }
   @media (max-width: 720px) {
     .console { grid-template-columns: 1fr; }
+    .module.slots { grid-column: auto; }
     .readout { align-items: flex-start; padding-left: 18px; }
     .masthead { align-items: flex-start; }
     .rail-right { width: 100%; }
@@ -684,11 +689,12 @@
     <div class="brand">
       <span class="eyebrow">Roblox &middot; The Shattered Balance</span>
       <h1>TSB Calculator</h1>
-      <p class="lede">Set your strength and spend four skill-tree slots. Every ability in the game recalculates as you go.</p>
+      <p class="lede">Set your strength, pick a weapon, and spend your skill-tree slots. Every ability in the game recalculates as you go.</p>
     </div>
     <div class="readout">
       <span class="readout-label">Effective strength</span>
       <span class="readout-value" id="effTotal">375</span>
+      <span class="readout-math"><b id="mBase">375</b> base <span class="op">+</span> <b id="mBonus">0</b> weapon</span>
     </div>
   </header>
 
@@ -701,6 +707,25 @@
         <input id="baseStr" type="number" min="0" max="99999" step="1" value="375" inputmode="numeric">
       </label>
       <p class="spear-math">Applies to every ability listed below.</p>
+    </div>
+
+    <div class="module" id="weaponModule">
+      <div class="mod-head"><h2 class="mod-title">Weapon</h2></div>
+      <label class="field">
+        <span>Weapon</span>
+        <select id="weapon"><option value="">None</option></select>
+      </label>
+      <div class="field-row">
+        <label class="field is-off" id="fLvl">
+          <span>Upgrade</span>
+          <select id="weaponLvl" disabled></select>
+        </label>
+        <label class="field is-off" id="fRar">
+          <span>Rarity</span>
+          <select id="weaponRar" disabled></select>
+        </label>
+      </div>
+      <p class="spear-math is-off" id="weaponMath">No weapon &mdash; no bonus strength.</p>
     </div>
 
 
@@ -1007,6 +1032,24 @@
   function allows(move, kind) { return move.Upgrades.indexOf(UP_CODE[kind]) !== -1; }
   function upgradable(move) { return move.Upgrades !== ''; }
 
+  // Strength each weapon grants per upgrade level (+0, +1, ...), at the 1.0x rarity baseline.
+  var WEAPONS = {
+    'Dual Swords': [1, 2, 3, 4, 5, 6, 7, 8, 10],
+    'Dual Hooks':  [1, 2, 3, 4, 5, 6, 7, 8, 10],
+    'Water Spear': [1, 2, 3, 4, 5, 6, 7, 8, 10],
+    'Water Club':  [1, 1, 2, 2, 3, 4, 4, 5, 6],
+    'Basic Sword': [1, 2, 3, 4, 6],
+    'Basic Spear': [1, 2, 3, 4, 6]
+  };
+  var RARITIES = [
+    { name: 'Common', mult: 0.65 },
+    { name: 'Uncommon', mult: 1 },
+    { name: 'Rare', mult: 1.25 },
+    { name: 'Epic', mult: 1.5 },
+    { name: 'Legendary', mult: 2 },
+    { name: 'Mythic', mult: 2.5 }
+  ];
+
   // Four slots for everyone; the secret quests unlock two more.
   var BASE_SLOTS = 4;
   var MAX_SLOTS = 6;
@@ -1019,6 +1062,9 @@
 
   var state = {
     base: 375,
+    weapon: '',
+    lvl: 0,
+    rarity: 1,
     secret: false,
     element: 'Fire',
     query: '',
@@ -1029,8 +1075,12 @@
   var ups = MOVES.map(function () { return { dmg: false, mas: false, spd: false }; });
 
   /* ---------- math ---------- */
+  function weaponBonus() {
+    if (!state.weapon) return 0;
+    return Math.ceil(WEAPONS[state.weapon][state.lvl] * state.rarity);
+  }
   function effectiveStrength() {
-    return state.base;
+    return state.base + weaponBonus();
   }
   function stats(move, u) {
     var eff = effectiveStrength();
@@ -1365,8 +1415,25 @@
   });
 
 
+  var mBaseEl = document.getElementById('mBase');
+  var mBonusEl = document.getElementById('mBonus');
+  var weaponMathEl = document.getElementById('weaponMath');
+
   function paintStrength() {
+    var bonus = weaponBonus();
     effTotalEl.textContent = effectiveStrength();
+    mBaseEl.textContent = state.base;
+    mBonusEl.textContent = bonus;
+    if (state.weapon) {
+      var rar = RARITIES.filter(function (r) { return r.mult === state.rarity; })[0];
+      weaponMathEl.classList.remove('is-off');
+      weaponMathEl.innerHTML = '<b>+' + bonus + '</b> strength &middot; ';
+      weaponMathEl.appendChild(document.createTextNode(
+        state.weapon + ' +' + state.lvl + ', ' + (rar ? rar.name : '')));
+    } else {
+      weaponMathEl.classList.add('is-off');
+      weaponMathEl.textContent = 'No weapon — no bonus strength.';
+    }
   }
 
   function paintSlots() {
@@ -1457,6 +1524,52 @@
   baseInput.addEventListener('input', function () {
     var n = parseFloat(baseInput.value);
     state.base = isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+    recompute();
+  });
+
+  var weaponSel = document.getElementById('weapon');
+  var weaponLvl = document.getElementById('weaponLvl');
+  var weaponRar = document.getElementById('weaponRar');
+  Object.keys(WEAPONS).forEach(function (name) {
+    var o = document.createElement('option');
+    o.value = o.textContent = name;
+    weaponSel.appendChild(o);
+  });
+  RARITIES.forEach(function (r) {
+    var o = document.createElement('option');
+    o.value = r.mult;
+    o.textContent = r.name + ' (\u00d7' + r.mult + ')';
+    o.selected = r.mult === state.rarity;
+    weaponRar.appendChild(o);
+  });
+  // Upgrade levels differ per weapon, so the list is rebuilt on every weapon change.
+  function fillLevels() {
+    var table = WEAPONS[state.weapon] || [];
+    if (state.lvl >= table.length) state.lvl = Math.max(0, table.length - 1);
+    weaponLvl.innerHTML = '';
+    table.forEach(function (str, lvl) {
+      var o = document.createElement('option');
+      o.value = lvl;
+      o.textContent = '+' + lvl + ' (' + str + ' str)';
+      o.selected = lvl === state.lvl;
+      weaponLvl.appendChild(o);
+    });
+  }
+  weaponSel.addEventListener('change', function () {
+    state.weapon = weaponSel.value;
+    var on = !!state.weapon;
+    weaponLvl.disabled = weaponRar.disabled = !on;
+    document.getElementById('fLvl').classList.toggle('is-off', !on);
+    document.getElementById('fRar').classList.toggle('is-off', !on);
+    fillLevels();
+    recompute();
+  });
+  weaponLvl.addEventListener('change', function () {
+    state.lvl = Number(weaponLvl.value);
+    recompute();
+  });
+  weaponRar.addEventListener('change', function () {
+    state.rarity = Number(weaponRar.value);
     recompute();
   });
 
