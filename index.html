@@ -23,7 +23,7 @@
     --ok: #4ADE80;
 
     --r: 10px;
-    --cols: minmax(190px, 2.4fr) 108px 132px 104px 92px 92px 176px;
+    --cols: minmax(190px, 2.4fr) 108px 132px 92px 92px 176px;
     --font-display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
     --font-body: "Barlow", "Segoe UI", system-ui, sans-serif;
     --font-mono: "JetBrains Mono", ui-monospace, "Consolas", monospace;
@@ -416,7 +416,7 @@
     overflow: hidden;
   }
   .scroller { overflow-x: auto; }
-  .grid { min-width: 940px; }
+  .grid { min-width: 840px; }
   .thead, .row {
     display: grid;
     grid-template-columns: var(--cols);
@@ -546,7 +546,6 @@
   .num.cut { color: var(--ok); }
   .num.fast { color: #35D6E0; }
   .c-total { display: flex; flex-direction: column; align-items: stretch; gap: 5px; }
-  .c-hits { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; cursor: help; }
   .c-total .stages { text-align: right; }
   .c-total .stages:empty { display: none; }
   .stages {
@@ -734,8 +733,6 @@
           <button class="th" data-sort="name" role="columnheader" aria-sort="none">Move</button>
           <button class="th" data-sort="element" role="columnheader" aria-sort="none">Element</button>
           <button class="th num-h" data-sort="total" role="columnheader" aria-sort="none">Damage</button>
-          <button class="th num-h" data-sort="hitbox" role="columnheader" aria-sort="none"
-            title="Hitbox count">Ticks</button>
           <button class="th num-h" data-sort="stamina" role="columnheader" aria-sort="none">Stamina</button>
           <button class="th num-h" data-sort="speed" role="columnheader" aria-sort="none">Speed</button>
           <span class="th num-h static" role="columnheader">Upgrades</span>
@@ -1023,7 +1020,6 @@
   function stats(move, u) {
     var eff = effectiveStrength();
     // BaseDamage and DamageScale already describe the move's true damage.
-    // HitboxCount is metadata (duration / ticks) and never multiplies into this.
     var raw = Math.round(move.BaseDamage + eff * move.DamageScale);
     var mult = isFinite(move.DamageMult) ? move.DamageMult : 1.2;
     var total = u.dmg ? Math.round(raw * mult) : raw;
@@ -1169,13 +1165,6 @@
         '<span class="bar"><i></i></span>' +
         '<span class="stages" data-f="note"></span>' +
       '</div>' +
-      '<div class="cell c-hits" role="cell" data-label="Ticks" ' +
-        'title="Hitbox count">' +
-        '<span class="num dim">' + (move.HitboxList.length ? fmt(move.HitboxCount) : '—') + '</span>' +
-        (move.HitboxList.length > 1
-          ? '<span class="stages">' + move.HitboxList.map(fmt).join(' + ') + '</span>'
-          : '') +
-      '</div>' +
       '<div class="cell" role="cell" data-label="Stamina"><span class="num" data-f="stam"></span></div>' +
       '<div class="cell" role="cell" data-label="Speed"><span class="num" data-f="speed"></span></div>' +
       '<div class="cell c-ups" role="cell" data-label="Skill slots"><div class="ups">' + chips + '</div></div>';
@@ -1237,7 +1226,6 @@
   var sortValue = {
     name: function (v) { return v.move.MoveTitle.toLowerCase(); },
     element: function (v) { return elLabel(v.move.Element).toLowerCase(); },
-    hitbox: function (v) { return v.move.HitboxCount; },
     total: function (v) { return v.s.total; },
     stamina: function (v) { return v.s.stamina; },
     speed: function (v) { return v.s.speed; }
