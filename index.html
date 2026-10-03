@@ -568,7 +568,7 @@
   .chip.mas:has(input:checked) { color: #0A1122; background: var(--ok); border-color: transparent; }
   .chip.spd:has(input:checked) { color: #0A1122; background: #35D6E0; border-color: transparent; }
   .chip.locked { opacity: .3; cursor: not-allowed; }
-  .chip.inert:not(:has(input:checked)) { border-style: dashed; }
+  .chip.na { opacity: .22; border-style: dashed; cursor: default; text-decoration: line-through; }
 
   .tfoot {
     display: flex;
@@ -766,72 +766,138 @@
   "use strict";
 
   var CSV = [
-    'Element,AbilityFolder,MoveTitle,HitboxCount,BaseDamage,DamageScale,BaseStamina,BaseSpeed,UpgradedDamageMultiplier,UpgradedStamina,UpgradedSpeed',
-    'Fire,Ability1,"Fireball",3.5,1,0.0225,5,0,1.20,2.5,0',
-    'Fire,Ability4,"Swing Kick",3.5,10,0.21,5,0,1.20,2.5,0',
-    'Fire,Ability4,"Slam Kick",4,30,0.19,5,0,1.20,2.5,0',
-    'Fire,Ability2,"Fly Kick",1,20,0.13,5,0,1.20,2.5,0',
-    'Fire,Ability6,"Fire Breathe",3.5,1,0.018,0,0,1.20,0,0',
-    'Fire,Ability7,"Sun Blast",6,15,0.3,20,0,1.20,10,0',
-    'Fire,Ability7,"Short Explosion",0.2,30,0.266,20,150,1.20,10,173',
-    'Fire,Ability7,"Lightning Bolt",1,15,0.25,20,0,1.20,10,0',
-    'Fire,Ability8,"Sun Barrage",3,3,0.02,20,0,1.20,10,0',
-    'Fire,Ability8,"Medium Explosion",0.2,30,0.266,20,150,1.20,10,173',
-    'Fire,Ability8,"Lightning Strike",1,10,0.155,20,0,1.20,10,0',
-    'Fire,Ability9,"Long Explosion",0.2,30,0.266,20,150,1.20,10,173',
-    'Fire,Ability10,"Fire Spin",1,10,0.025,20,0,1.20,10,0',
-    'Base,Melee,"Punch",1,5,0.1,3,0,1.20,1.5,0',
-    'Base,Melee,"Tentacle",1,5,0.1,3,0,1.20,1.5,0',
-    'Base,Melee,"Sword",1,5,0.1,3,0,1.20,1.5,0',
-    'Base,Melee,"Spear",1,15,0.1,10,250,1.20,5,288',
-    'Air,Ability3,"Gust",3.5,1,0.0225,5,0,1.20,2.5,0',
-    'Air,Ability5,"Whirlwind",1,15,0.25,10,0,1.20,5,0',
-    'Air,Ability6,"Air Blow",3.5,2,0.02,0,0,1.20,0,0',
-    'Air,Ability7,"Glider Swipe",12, 12, 12,2,0.025,20,0,1.20,10,0',
-    'Air,Ability7,"Triple Swipe",9, 9, 9,1,0.015,20,0,1.20,10,0',
-    'Air,Ability8,"Glider Whip",1,15,0.215,20,0,1.20,10,0',
-    'Air,Ability8,"Air Torpedo",1,15,0.25,20,0,1.20,10,0',
-    'Air,Ability9,"Tornado",1,14,0.2,20,0,1.20,10,0',
-    'Air,Ability9,"Air Pursuit",12,20,0.225,20,60,1.20,10,69',
-    'Earth,Ability1,"Rock Throw",6,10,0.225,5,135,1.20,2.5,155',
-    'Earth,Ability2,"Earth Launch",1,5,0.25,10,0,1.20,5,0',
-    'Earth,Ability3,"Earth Wall",20, 20, 5,5,0.25,5,90,1.20,2.5,103',
-    'Earth,Ability4,"Earth Punch",1,10,0.25,5,90,1.20,2.5,103',
-    'Earth,Ability5,"Rock Triad",1,10,0.2,10,110,1.20,5,126',
-    'Earth,Ability6,"Earthquake",8, 16, 8,10,0.18,10,0,1.20,5,0',
-    'Earth,Ability6,"Earth Smash",1,15,0.22,10,0,1.20,5,0',
-    'Earth,Ability7,"Plate Shot",4, 4, 4,17,0.12,20,165,1.20,10,190',
-    'Earth,Ability7,"Sand Slash",4.099999904632568, 24, 24,20,0.22,20,105,1.20,10,121',
-    'Earth,Ability7,"Lava Streams",1,5,0.063,20,0,1.20,10,0',
-    'Earth,Ability8,"Lava Pool",1,5,0.053,20,0,1.20,10,0',
-    'Earth,Ability8,"Sandstorm",1,30,0.18,20,65,1.20,10,75',
-    'Earth,Ability9,"Lava Wave",1,40,0.2,20,90,1.20,10,103',
-    'Earth,Ability9,"Extension Sword",9, 8, 9,5,0.25,20,65,1.20,10,75',
-    'Earth,Ability10,"Earth Pillars",1,5,0.25,20,350,1.20,10,402',
-    'Water,Ability1,"Splash",3.5,20,0.2,5,165,1.20,2.5,190',
-    'Water,Ability2,"Water Burst",1,15,0.225,10,0,1.20,5,0',
-    'Water,Ability2,"Water Whip",6,30,0.22,5,185,1.20,2.5,213',
-    'Water,Ability5,"Water Wave",1,10,0.205,10,75,1.20,5,86',
-    'Water,Ability6,"Water Leap",1,15,0.1,10,0,1.20,5,0',
-    'Water,Ability7,"Ice Spikes",1,5,0.25,20,285,1.20,10,328',
-    'Water,Ability7,"Vine Slash",1,5,0.225,20,0,1.20,10,0',
-    'Water,Ability9,"Ice Barrage",2.5,6,0.02,20,180,1.20,10,207',
-    'Water,Ability9,"Vine Whip",1,5,0.225,20,0,1.20,10,0',
-    'Water,Ability8,"Ice Wall",2,5,0.075,10,160,1.20,5,184',
-    'Water,Ability10,"Spirit Wave",1,50,0.18,25,115,1.20,12.5,132',
-    'Tentacles,Ability8,"Tentacle Swipe",1,16,0.13,20,70,1.20,10,81',
-    'Tentacles,Ability9,"Tentacle Storm",2.5,10,0.09,20,160,1.20,10,184',
-    'FireTank,Ability1,"Fire Blast",6,10,0.22,0,0,1.20,0,0',
-    'EarthTank,Ability1,"Earth Charge",1,10,0.22,0,0,1.20,0,0'
+    'Element,AbilityFolder,MoveTitle,Hitbox,BaseDamage,DamageScale,BaseStamina,StaminaDrain,BaseSpeed,DamageMult,MasteryMult,SpeedMult,Upgrades,ExtraLabel,ExtraBase,ExtraScale',
+    'Fire,Ability2,"Fireball","3.5",1,0.0225,5,0,130,1.2,0.5,1.15,DMS,,,',
+    'Fire,Ability3,"Fly Kick","",20,0.13,5,0,0,1.2,0.5,1.15,DM,,,',
+    'Fire,Ability3,"Fire Spin","",8,0.025,10,0,0,1.2,0.5,1.15,DM,,,',
+    'Fire,Ability5,"Swing Kick","3.5",10,0.21,5,0,130,1.2,0.5,1.15,DMS,,,',
+    'Fire,Ability5,"Slam Kick","4",30,0.19,5,0,145,1.2,0.5,1.15,DMS,,,',
+    'Fire,Ability6,"Fire Breathe","3.5",1,0.018,0,1,130,1.2,0.5,1.15,DMS,,,',
+    'Fire,Ability6,"Fire Charge","3.5",25,0.21,10,0,130,1.2,0.5,1.15,DMS,,,',
+    'Fire,Ability7,"Sun Blast","6",15,0.275,20,0,130,1.2,0.5,1.15,DMS,,,',
+    'Fire,Ability7,"Short Explosion","0.2",30,0.266,20,0,150,1.2,0.5,1.15,DMS,,,',
+    'Fire,Ability7,"Lightning Bolt","",15,0.25,20,0,0,1.2,0.5,1.25,DM,,,',
+    'Fire,Ability8,"Sun Barrage","3",3,0.02,20,0,130,1.2,0.5,1.15,DMS,,,',
+    'Fire,Ability8,"Medium Explosion","0.2",30,0.266,20,0,150,1.2,0.5,1.15,DMS,,,',
+    'Fire,Ability8,"Lightning Strike","",15,0.155,20,0,0,1.2,0.5,1.15,DM,,,',
+    'Fire,Ability9,"Long Explosion","0.2",30,0.266,20,0,150,1.2,0.5,1.15,DMS,,,',
+    'Fire,Ability9,"Lightning Redirect","",10,0.155,20,0,0,1.2,0.5,,DM,,,',
+    'Fire,Ability10,"Fire Rift","",5,0.045,20,0,0,1.2,0.5,,DM,,,',
+    'Air,Ability3,"Gust","3.5",1,0.0225,5,0,130,1.2,0.5,1.15,DMS,,,',
+    'Air,Ability5,"Whirlwind","",15,0.25,10,0,0,1.2,0.5,,DM,,,',
+    'Air,Ability5,"Air Assault","",10,0.15,10,0,0,1.2,0.5,1.15,DMS,,,',
+    'Air,Ability6,"Air Blow","3.5",2,0.02,0,0.5,130,1.2,0.5,1.15,DMS,,,',
+    'Air,Ability7,"Glider Swipe","12, 12, 12",2,0.025,20,0,95,1.2,0.5,1.15,DMS,,,',
+    'Air,Ability7,"Triple Swipe","9, 9, 9",1,0.015,20,0,80,1.2,0.5,1.15,DMS,,,',
+    'Air,Ability8,"Glider Whip","",15,0.215,20,0,0,1.2,0.5,,DM,,,',
+    'Air,Ability8,"Air Torpedo","",15,0.25,20,0,0,1.2,0.5,,DM,,,',
+    'Air,Ability9,"Tornado","",19,0.18,20,0,0,1.2,0.5,,DM,,,',
+    'Air,Ability9,"Air Pursuit","12",20,0.225,20,0,70,1.2,0.5,1.15,DMS,,,',
+    'Earth,Ability1,"Earth Launch","",5,0.25,10,0,0,1.2,0.5,,DM,,,',
+    'Earth,Ability2,"Rock Throw","6",10,0.225,5,0,135,1.2,0.5,1.15,DMS,,,',
+    'Earth,Ability3,"Earth Wall","20, 20, 5",5,0.25,5,0,90,,0.5,,M,,,',
+    'Earth,Ability4,"Earth Punch","",10,0.25,5,0,110,1.2,0.5,1.15,DMS,,,',
+    'Earth,Ability5,"Rock Triad","",10,0.2,10,0,120,1.2,0.5,1.15,DMS,,,',
+    'Earth,Ability5,"Earth Meteor","6",30,0.225,10,8,165,1.2,0.5,1.15,DMS,,,',
+    'Earth,Ability6,"Earthquake","8, 16, 8",10,0.18,10,0,0,1.2,0.5,,DM,,,',
+    'Earth,Ability6,"Earth Smash","",15,0.22,10,0,0,1.2,0.5,,DM,,,',
+    'Earth,Ability7,"Lava Shuriken","",10,0.2,20,0,165,1.2,0.5,1.15,DMS,burn,5,0.0375',
+    'Earth,Ability7,"Plate Shot","4.8, 4.8, 4.8",17,0.12,20,0,175,1.2,0.5,1.15,DMS,,,',
+    'Earth,Ability7,"Sand Slash","4.1, 24, 24",20,0.22,20,0,105,1.2,0.5,1.15,DMS,,,',
+    'Earth,Ability8,"Lava Pool","",5,0.053,20,0,0,1.2,0.5,,DM,,,',
+    'Earth,Ability8,"Sandstorm","",30,0.18,20,0,65,1.2,0.5,1.15,DMS,,,',
+    'Earth,Ability9,"Lava Wave","",15,0.2,20,0,90,1.2,0.5,1.15,DMS,tick,1,0.05',
+    'Earth,Ability9,"Extension Sword","9, 8, 9",5,0.25,20,0,65,1.2,0.5,1.15,DMS,,,',
+    'Earth,Ability10,"Earth Pillars","",5,0.25,20,0,350,1.2,0.5,1.15,DMS,,,',
+    'FireTank,Ability1,"Fire Blast","6",10,0.22,0,0,130,,,,,,,',
+    'EarthTank,Ability1,"Earth Charge","",10,0.22,0,0,0,,,,,,,',
+    'Water,Ability2,"Splash","3.5",20,0.2,5,0,165,1.2,0.5,1.15,DMS,,,',
+    'Water,Ability3,"Water Burst","",15,0.225,10,0,0,1.2,0.5,,DM,,,',
+    'Water,Ability3,"Water Whip","4",30,0.2,5,0,165,1.2,0.5,1.15,DMS,,,',
+    'Water,Ability5,"Water Wave","",10,0.205,10,0,75,1.2,0.5,1.15,DMS,,,',
+    'Water,Ability6,"Water Leap","",15,0.1,10,0,0,1.2,0.5,1.15,DM,,,',
+    'Water,Ability6,"Water Spin","",20,0.2,10,0,165,1.2,0.5,1.15,DMS,,,',
+    'Water,Ability7,"Ice Spikes","",5,0.25,20,0,285,1.2,0.5,1.15,DMS,,,',
+    'Water,Ability7,"Vine Slash","",5,0.225,20,0,0,1.2,0.5,,DM,,,',
+    'Water,Ability9,"Ice Barrage","2.5",6,0.02,20,0,180,1.2,0.5,1.15,DMS,,,',
+    'Water,Ability9,"Vine Whip","",5,0.225,20,0,0,1.2,0.5,,DM,,,',
+    'Water,Ability9,"Tentacle Storm","2.5",15,0.09,20,0,160,1.2,0.5,1.15,DMS,,,',
+    'Water,Ability8,"Ice Wall","2",5,0.075,10,0,160,1.2,0.5,1.15,DMS,,,',
+    'Water,Ability8,"Tentacle Swipe","",16,0.13,20,0,70,1.2,0.5,1.15,DMS,,,',
+    'Water,Ability10,"Spirit Wave","",80,0.18,25,0,115,1.2,0.5,1.15,DMS,,,',
+    'Water,Ability11,"Blood Control","",125,0,20,0,0,,,,,,,',
+    'Fans,Ability1,"Fan Toss","1.7",15,0.12,10,0,165,1.2,0.5,1.15,DMS,,,',
+    'Fans,Ability2,"Fan Tornado","",15,0.15,10,0,0,1.2,0.5,,DM,,,',
+    'Fans,Ability3,"Fan Leap","",10,0.2,10,0,0,1.2,0.5,,DM,,,',
+    'Fans,Ability4,"Fan Flurry","",15,0.09,10,0,0,1.2,0.5,,DM,,,',
+    'Fans,Ability6,"Fan Rush","",10,0.2,10,0,0,1.2,0.5,,DM,,,',
+    'Fans,Ability7,"Powder Bomb","0.2",30,0.18,10,0,150,1.2,0.5,,DM,,,',
+    'Fans,Ability7,"Knives Barrage","",40,0.08,10,0,180,1.2,0.5,1.15,DMS,,,',
+    'Fans,Ability8,"Double Powder Bomb","0.2",30,0.18,20,0,150,1.2,0.5,,DM,,,',
+    'Fans,Ability8,"Sais","",40,0.08,10,0,180,1.2,0.5,1.15,DMS,,,',
+    'Fans,Ability9,"Precision Slide","",40,0.08,25,0,180,1.2,0.5,1.15,DMS,,,',
+    'Fans,Ability9,"Flying Kick","",10,0.17,10,0,0,1.2,0.5,,DM,,,',
+    'Swordsman,Ability1,"Sword Fury","",15,0.09,10,0,0,1.2,0.5,,DM,,,',
+    'Swordsman,Ability2,"Graceful Slide","",10,0.2,10,0,0,,0.5,,M,,,',
+    'Swordsman,Ability4,"Blinding Slash","4.485, 20.4, 20.4",10,0.2,10,0,80,1.2,0.5,1.15,DMS,,,',
+    'Swordsman,Ability5,"Arc Slash","",20,0.15,10,0,0,1.2,0.5,,DM,,,',
+    'Swordsman,Ability6,"Power Stab","",30,0.25,10,0,0,1.2,0.5,,DM,,,',
+    'Swordsman,Ability7,"Powder Bomb","0.2",30,0.18,10,0,150,1.2,0.5,,DM,,,',
+    'Swordsman,Ability7,"Knives Barrage","",40,0.08,10,0,180,1.2,0.5,1.15,DMS,,,',
+    'Swordsman,Ability8,"Double Powder Bomb","0.2",30,0.18,20,0,150,1.2,0.5,,DM,,,',
+    'Swordsman,Ability8,"Sais","",40,0.08,10,0,180,1.2,0.5,1.15,DMS,,,',
+    'Swordsman,Ability9,"Precision Slide","",40,0.08,25,0,180,1.2,0.5,1.15,DMS,,,',
+    'Swordsman,Ability9,"Flying Kick","",10,0.17,10,0,0,1.2,0.5,,DM,,,',
+    'Archer,Ability1,"Arrow Shot","",25,0.15,5,0,210,1.2,0.5,1.15,DMS,,,',
+    'Archer,Ability2,"Power Shot","",45,0.2,10,0,250,1.2,0.5,1.15,DMS,,,',
+    'Archer,Ability3,"Disengage","",20,0.15,10,0,210,1.2,0.5,1.15,DMS,,,',
+    'Archer,Ability4,"Bow Strike","",45,0.12,10,0,0,1.2,0.5,,DM,,,',
+    'Archer,Ability5,"Dash Shot","",25,0.15,10,0,210,1.2,0.5,1.15,DMS,,,',
+    'Archer,Ability6,"Arrow Barrage","",10,0.1,10,0,210,1.2,0.5,1.15,DMS,,,',
+    'Archer,Ability7,"Powder Bomb","0.2",30,0.18,10,0,150,1.2,0.5,,DM,,,',
+    'Archer,Ability7,"Knives Barrage","",40,0.08,10,0,180,1.2,0.5,1.15,DMS,,,',
+    'Archer,Ability8,"Double Powder Bomb","0.2",30,0.18,20,0,150,1.2,0.5,,DM,,,',
+    'Archer,Ability8,"Sais","",40,0.08,10,0,180,1.2,0.5,1.15,DMS,,,',
+    'Archer,Ability9,"Precision Slide","",40,0.08,25,0,180,1.2,0.5,1.15,DMS,,,',
+    'Archer,Ability9,"Flying Kick","",10,0.17,10,0,0,1.2,0.5,,DM,,,',
+    'Tribesman,Ability1,"Spear Charge","",5,0.18,10,0,0,1.2,0.5,,DM,,,',
+    'Tribesman,Ability2,"Scorpion","",15,0.12,10,0,120,1.2,0.5,,DM,,,',
+    'Tribesman,Ability4,"Spear Swipes","",15,0.11,10,0,0,1.2,0.5,,DM,,,',
+    'Tribesman,Ability5,"Spear Launch","",10,0.18,10,0,0,1.2,0.5,,DM,,,',
+    'Tribesman,Ability6,"Boomerang","",20,0.18,10,0,120,1.2,0.5,,DM,,,',
+    'Tribesman,Ability7,"Knives Barrage","",40,0.08,10,0,180,1.2,0.5,1.15,DMS,,,',
+    'Tribesman,Ability8,"Sais","",40,0.08,10,0,180,1.2,0.5,1.15,DMS,,,',
+    'Tribesman,Ability9,"Precision Slide","",40,0.08,25,0,180,1.2,0.5,1.15,DMS,,,',
+    'Tribesman,Ability9,"Flying Kick","",10,0.17,10,0,0,1.2,0.5,,DM,,,',
+    'Guerilla,Ability1,"Dual Chop","",20,0.15,10,0,0,1.2,0.5,,DM,,,',
+    'Guerilla,Ability2,"Stance Break","",27,0.12,10,0,0,1.2,0.5,,DM,,,',
+    'Guerilla,Ability3,"Hook Pounce","",20,0.14,10,0,0,1.2,0.5,,DM,,,',
+    'Guerilla,Ability4,"Hook Torpedo","",20,0.14,10,0,0,1.2,0.5,,DM,,,',
+    'Guerilla,Ability5,"Hook Charge","",50,0.14,10,0,0,1.2,0.5,,DM,,,',
+    'Guerilla,Ability7,"Knives Barrage","",40,0.08,10,0,180,1.2,0.5,1.15,DMS,,,',
+    'Guerilla,Ability8,"Sais","",40,0.08,10,0,180,1.2,0.5,1.15,DMS,,,',
+    'Guerilla,Ability9,"Precision Slide","",40,0.08,25,0,180,1.2,0.5,1.15,DMS,,,',
+    'Guerilla,Ability9,"Flying Kick","",10,0.17,10,0,0,1.2,0.5,,DM,,,',
+    'Templar,Ability2,"Templar Strike","",40,0.12,10,0,0,1.2,0.5,,DM,,,',
+    'Templar,Ability4,"Double Kick","",40,0.06,10,0,0,1.2,0.5,,DM,,,',
+    'Templar,Ability5,"Wrap Kick","",50,0.09,10,0,0,1.2,0.5,,DM,,,',
+    'Templar,Ability7,"Knives Barrage","",40,0.08,10,0,180,1.2,0.5,1.15,DMS,,,',
+    'Templar,Ability8,"Sais","",40,0.08,10,0,180,1.2,0.5,1.15,DMS,,,',
+    'Templar,Ability9,"Precision Slide","",40,0.08,25,0,180,1.2,0.5,1.15,DMS,,,',
+    'Templar,Ability9,"Flying Kick","",10,0.17,10,0,0,1.2,0.5,,DM,,,',
+    'WhiteDragon,Ability1,"Dragon\'s Breathe","3.5",8,0,0,0,250,,,,,,,',
+    'Base,Melee,"Punch","1",5,0.1,3,0,0,,,,,,,',
+    'Base,Melee,"Tentacle","1",5,0.1,3,0,0,,,,,,,',
+    'Base,Melee,"Sword","1",5,0.1,3,0,0,,,,,,,',
+    'Base,Melee,"Spear","1",15,0.1,10,0,250,,,,,,,'
   ].join('\n');
 
   function parseCSV(text) {
     var lines = text.replace(/\r/g, '').split('\n').filter(function (l) { return l.trim() !== ''; });
     var head = lines[0].split(',');
-    // Everything after HitboxCount is a fixed-width numeric tail; a move may list
-    // several hitbox counts (one per stage of the move), so the hitbox column
-    // itself is variable width and is read as whatever sits between the two.
-    var tailCols = head.slice(4);
+    // Hitbox is a quoted list (one size per stage of the move); Upgrades and
+    // ExtraLabel are text; every other column is numeric.
+    var TEXT = { Element: 1, AbilityFolder: 1, MoveTitle: 1, Hitbox: 1, Upgrades: 1, ExtraLabel: 1 };
 
     return lines.slice(1).map(function (line, i) {
       var cells = [], cur = '', quoted = false;
@@ -847,19 +913,15 @@
       cells.push(cur);
       cells = cells.map(function (v) { return v.trim(); });
 
-      var cut = cells.length - tailCols.length;
-      var row = {
-        id: i,
-        Element: cells[0],
-        AbilityFolder: cells[1],
-        MoveTitle: cells[2],
-        HitboxList: cells.slice(3, cut).map(Number).filter(function (n) { return isFinite(n); })
-      };
-      row.HitboxCount = row.HitboxList.reduce(function (a, b) { return a + b; }, 0);
-      tailCols.forEach(function (h, j) {
-        var raw = cells[cut + j];
-        row[h] = (raw === undefined || raw === '') ? NaN : Number(raw);
+      var row = { id: i };
+      head.forEach(function (h, j) {
+        var raw = cells[j] === undefined ? '' : cells[j];
+        row[h] = TEXT[h] ? raw : (raw === '' ? NaN : Number(raw));
       });
+      row.HitboxList = row.Hitbox.split(',').map(Number).filter(function (n) {
+        return isFinite(n) && n > 0;
+      });
+      row.HitboxCount = row.HitboxList.reduce(function (a, b) { return a + b; }, 0);
       return row;
     });
   }
@@ -875,14 +937,22 @@
     Base:      { label: 'Base / Melee', color: '#94A6C2' },
     Tentacles: { label: 'Tentacles', color: '#B265F0' },
     FireTank:  { label: 'Fire Tank', color: '#FF8A3D' },
-    EarthTank: { label: 'Earth Tank', color: '#C9873A' }
+    EarthTank: { label: 'Earth Tank', color: '#C9873A' },
+    Fans:      { label: 'Fans',      color: '#F472B6' },
+    Swordsman: { label: 'Swordsman', color: '#9FB4FF' },
+    Archer:    { label: 'Archer',    color: '#4ADE80' },
+    Tribesman: { label: 'Tribesman', color: '#E07A5F' },
+    Guerilla:  { label: 'Guerilla',  color: '#A3E635' },
+    Templar:   { label: 'Templar',   color: '#FDE047' },
+    WhiteDragon: { label: 'White Dragon', color: '#D7ECFF' }
   };
   function elColor(name) { return (ELEMENTS[name] || {}).color || '#94A6C2'; }
   function elLabel(name) { return (ELEMENTS[name] || {}).label || name; }
 
   // Movesets that belong to an element without carrying its name.
-  var PARENT = { Tentacles: 'Water', FireTank: 'Fire', EarthTank: 'Earth' };
-  var MOVESET = { Tentacles: 'Tentacles', FireTank: 'Fire Tank', EarthTank: 'Earth Tank' };
+  var PARENT = { Tentacles: 'Water', FireTank: 'Fire', EarthTank: 'Earth', WhiteDragon: 'Creatures' };
+  var MOVESET = { Tentacles: 'Tentacles', FireTank: 'Fire Tank', EarthTank: 'Earth Tank', WhiteDragon: 'White Dragon' };
+  ELEMENTS.Creatures = { label: 'Creatures', color: '#D7ECFF' };
   function elGroup(name) { return PARENT[name] || name; }
 
   // Sub-movesets within an element. Anything unlisted is a basic move for its
@@ -895,13 +965,21 @@
     'Lava Streams': 'Lava', 'Lava Pool': 'Lava', 'Lava Wave': 'Lava',
     'Plate Shot': 'Metal', 'Extension Sword': 'Metal',
     'Sun Blast': 'Sun Warrior', 'Sun Barrage': 'Sun Warrior',
-    'Lightning Bolt': 'Lightning', 'Lightning Strike': 'Lightning',
-    'Short Explosion': 'Combustion', 'Medium Explosion': 'Combustion', 'Long Explosion': 'Combustion'
+    'Lightning Bolt': 'Lightning', 'Lightning Strike': 'Lightning', 'Lightning Redirect': 'Lightning',
+    'Short Explosion': 'Combustion', 'Medium Explosion': 'Combustion', 'Long Explosion': 'Combustion',
+    'Lava Shuriken': 'Lava',
+    // Shared by every weapon class.
+    'Powder Bomb': 'Explosives', 'Double Powder Bomb': 'Explosives',
+    'Knives Barrage': 'Blades', 'Sais': 'Blades', 'Precision Slide': 'Blades',
+    'Flying Kick': 'Acrobat'
   };
+  var CLASS_SUBS = ['Explosives', 'Blades', 'Acrobat'];
   var SUB_ORDER = {
     Water: ['Tentacles', 'Plant', 'Ice'],
     Earth: ['Sand', 'Lava', 'Metal'],
-    Fire: ['Sun Warrior', 'Lightning', 'Combustion']
+    Fire: ['Sun Warrior', 'Lightning', 'Combustion'],
+    Fans: CLASS_SUBS, Swordsman: CLASS_SUBS, Archer: CLASS_SUBS,
+    Tribesman: CLASS_SUBS, Guerilla: CLASS_SUBS, Templar: CLASS_SUBS
   };
   function subOf(move) { return SUB_OF[move.MoveTitle] || null; }
   function subRank(group, sub) {
@@ -911,8 +989,10 @@
     return at === -1 ? list.length : at;
   }
 
-  // Base melee takes no skill-tree upgrades.
-  function upgradable(move) { return move.Element !== 'Base'; }
+  // Which skill-tree upgrades a move accepts: D(amage), M(astery), S(peed).
+  var UP_CODE = { dmg: 'D', mas: 'M', spd: 'S' };
+  function allows(move, kind) { return move.Upgrades.indexOf(UP_CODE[kind]) !== -1; }
+  function upgradable(move) { return move.Upgrades !== ''; }
 
   // Total strength the spear grants at each upgrade level, at the 1.0x baseline.
   var SPEAR_BASE = [2, 4, 5, 7, 8, 10];
@@ -961,20 +1041,24 @@
     // BaseDamage and DamageScale already describe the move's true damage.
     // HitboxCount is metadata (duration / ticks) and never multiplies into this.
     var raw = Math.round(move.BaseDamage + eff * move.DamageScale);
-    var mult = isFinite(move.UpgradedDamageMultiplier) ? move.UpgradedDamageMultiplier : 1.2;
+    var mult = isFinite(move.DamageMult) ? move.DamageMult : 1.2;
     var total = u.dmg ? Math.round(raw * mult) : raw;
 
-    var stamina = move.BaseStamina;
-    if (u.mas) {
-      stamina = isFinite(move.UpgradedStamina) ? move.UpgradedStamina : move.BaseStamina * 0.5;
+    // Secondary damage (burn, ticks) scales the same way and takes the same boost.
+    var extra = null;
+    if (move.ExtraLabel) {
+      extra = Math.round(move.ExtraBase + eff * move.ExtraScale);
+      if (u.dmg) extra = Math.round(extra * mult);
     }
+
+    var mas = isFinite(move.MasteryMult) ? move.MasteryMult : 0.5;
+    var stamina = u.mas ? move.BaseStamina * mas : move.BaseStamina;
+    var drain = u.mas ? move.StaminaDrain * mas : move.StaminaDrain;
     var speed = move.BaseSpeed;
     if (u.spd) {
-      speed = isFinite(move.UpgradedSpeed) && move.UpgradedSpeed > 0
-        ? move.UpgradedSpeed
-        : Math.round(move.BaseSpeed * 1.15);
+      speed = Math.round(move.BaseSpeed * (isFinite(move.SpeedMult) ? move.SpeedMult : 1.15));
     }
-    return { raw: raw, total: total, stamina: stamina, speed: speed };
+    return { raw: raw, total: total, extra: extra, stamina: stamina, drain: drain, speed: speed };
   }
   function fmt(n) {
     if (!isFinite(n)) return '—';
@@ -987,14 +1071,20 @@
   }
 
   /* ---------- element tabs ----------
-     Four elemental tabs, plus All and the moves that belong to no element. */
+     Four elemental tabs, the weapon classes, creatures, and base melee. */
   var TABS = [
     { key: 'Fire',  label: 'Fire',         color: '#FF5A3C', match: ['Fire', 'FireTank'] },
     { key: 'Air',   label: 'Air',          color: '#35D6E0', match: ['Air'] },
     { key: 'Earth', label: 'Earth',        color: '#F0A828', match: ['Earth', 'EarthTank'] },
-    { key: 'Water', label: 'Water',        color: '#4C8DF6', match: ['Water', 'Tentacles'] },
-    { key: 'Base',  label: 'Base / Melee', color: '#94A6C2', match: ['Base'] }
+    { key: 'Water', label: 'Water',        color: '#4C8DF6', match: ['Water', 'Tentacles'] }
   ];
+  ['Fans', 'Swordsman', 'Archer', 'Tribesman', 'Guerilla', 'Templar'].forEach(function (c) {
+    TABS.push({ key: c, label: elLabel(c), color: elColor(c), match: [c] });
+  });
+  TABS.push(
+    { key: 'Creatures', label: 'Creatures',    color: '#D7ECFF', match: ['WhiteDragon'] },
+    { key: 'Base',      label: 'Base / Melee', color: '#94A6C2', match: ['Base'] }
+  );
   function tabMatches(key, element) {
     var tab = TABS.filter(function (t) { return t.key === key; })[0];
     if (!tab || !tab.match) return true;
@@ -1078,6 +1168,9 @@
     var canUpgrade = upgradable(move);
     var chips = canUpgrade
       ? KINDS.map(function (k) {
+          if (!allows(move, k.key)) {
+            return '<span class="chip na" title="' + k.title + ' — not available on this move">' + k.tag + '</span>';
+          }
           return '<label class="chip ' + k.key + '" title="' + k.title + '">' +
             '<input type="checkbox" data-move="' + i + '" data-kind="' + k.key + '">' +
             '<span>' + k.tag + '</span></label>';
@@ -1094,7 +1187,7 @@
       '</div>' +
       '<div class="cell c-hits" role="cell" data-label="Ticks" ' +
         'title="Hitbox count">' +
-        '<span class="num dim">' + fmt(move.HitboxCount) + '</span>' +
+        '<span class="num dim">' + (move.HitboxList.length ? fmt(move.HitboxCount) : '—') + '</span>' +
         (move.HitboxList.length > 1
           ? '<span class="stages">' + move.HitboxList.map(fmt).join(' + ') + '</span>'
           : '') +
@@ -1122,6 +1215,7 @@
     };
     if (canUpgrade) {
       KINDS.forEach(function (k) {
+        if (!allows(move, k.key)) return;
         var input = row.querySelector('input[data-kind="' + k.key + '"]');
         v.inputs[k.key] = input;
         v.chips[k.key] = input.parentNode;
@@ -1319,10 +1413,12 @@
 
       v.total.textContent = fmt(s.total);
       v.total.classList.toggle('up', u.dmg);
-      v.note.textContent = '';
+      v.note.textContent = s.extra !== null ? '+ ' + fmt(s.extra) + ' ' + v.move.ExtraLabel : '';
 
-      v.stam.textContent = s.stamina > 0 ? fmt(s.stamina) : '—';
-      v.stam.classList.toggle('cut', u.mas && s.stamina !== v.move.BaseStamina);
+      // Hold moves cost nothing up front and drain stamina per second instead.
+      v.stam.textContent = s.stamina > 0 ? fmt(s.stamina)
+        : (s.drain > 0 ? fmt(s.drain) + '/s' : '—');
+      v.stam.classList.toggle('cut', u.mas);
 
       v.speed.textContent = s.speed > 0 ? fmt(s.speed) : '—';
       v.speed.classList.toggle('fast', u.spd && s.speed !== v.move.BaseSpeed);
@@ -1333,17 +1429,11 @@
 
       KINDS.forEach(function (k) {
         var input = v.inputs[k.key];
+        if (!input) return;
         var lock = full && !u[k.key];
         input.disabled = lock;
         v.chips[k.key].classList.toggle('locked', lock);
       });
-      // Selectable on every upgradable move, but flagged where it changes nothing.
-      var noStam = !(v.move.BaseStamina > 0);
-      var noSpeed = !(v.move.BaseSpeed > 0 || v.move.UpgradedSpeed > 0);
-      v.chips.mas.classList.toggle('inert', noStam);
-      v.chips.spd.classList.toggle('inert', noSpeed);
-      v.chips.mas.title = noStam ? 'Mastery — no effect on this move' : 'Mastery';
-      v.chips.spd.title = noSpeed ? 'Speed Boost — no effect on this move' : 'Speed Boost';
     });
 
     paintStrength();
@@ -1390,8 +1480,7 @@
   clearBtn.addEventListener('click', function () {
     ups.forEach(function (u) { KINDS.forEach(function (k) { u[k.key] = false; }); });
     views.forEach(function (v) {
-      if (!v.canUpgrade) return;
-      KINDS.forEach(function (k) { v.inputs[k.key].checked = false; });
+      KINDS.forEach(function (k) { if (v.inputs[k.key]) v.inputs[k.key].checked = false; });
     });
     recompute();
     applyFilters();
